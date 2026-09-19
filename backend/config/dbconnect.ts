@@ -5,6 +5,6 @@ export const conn = createPool({
     host: 'mysql-web-final-project-watcharakoon2535-fa27.c.aivencloud.com',
     port: 10051,
     user: 'avnadmin',
-    password: ``,
+    password: `[รหัสผ่าน]`,
     database: 'lunch_delivery'
 });
