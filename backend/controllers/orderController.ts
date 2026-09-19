@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { error } from "node:console";
 import { conn } from "../config/dbconnect";
 import { ResultSetHeader } from "mysql2";
 import { CreateOrderModel, OrderModel, UpdateOrderModel } from "../models/orderModel";
@@ -204,6 +203,63 @@ export const deleteOrderByID = async (req: Request,res: Response) => {
 
         res.status(200).json({
             message: "Order cancelled successfully"
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            error: "Database error"
+        });
+    }
+};
+
+export const randomOrder = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const amount = Number(req.body.amount ?? 10);
+
+        const [rows] = await conn.query(
+            `SELECT id
+             FROM customers
+             WHERE deleted_at IS NULL`
+        );
+
+        const customers = rows as { id: number }[];
+
+        if (customers.length === 0) {
+            return res.status(400).json({
+                error: "No customers available"
+            });
+        }
+
+        for (let i = 0; i < amount; i++) {
+            const randomCustomer =
+                customers[
+                    Math.floor(
+                        Math.random() * customers.length
+                    )
+                ];
+
+            const quantity =
+                Math.floor(Math.random() * 3) + 1;
+
+            await conn.query(
+                `INSERT INTO orders
+                (customer_id, quantity, order_date, status, is_demo)
+                VALUES (?, ?, CURDATE(), 'pending', TRUE)`,
+                [
+                    randomCustomer!.id,
+                    quantity
+                ]
+            );
+        }
+
+        res.status(201).json({
+            message: "Random orders generated",
+            amount
         });
 
     } catch (err) {
