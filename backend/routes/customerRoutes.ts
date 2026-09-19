@@ -1,7 +1,10 @@
 import express from "express";
-import { getCustomers, getCustomersByID } from "../controllers/customerController";
+import { createCustomer, deleteCustomerByID, getCustomers, getCustomersByID, updateCustomerByID } from "../controllers/customerController";
 
 export const router = express.Router();
 
 router.get("/", getCustomers);
 router.get("/:id", getCustomersByID);
+router.post("/", createCustomer);
+router.delete("/:id", deleteCustomerByID);
+router.put("/:id", updateCustomerByID);
