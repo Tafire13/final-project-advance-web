@@ -39,13 +39,19 @@ export const getCustomersByID = async (req: Request, res: Response) => {
 
 export const createCustomer = async (req: Request, res: Response) => {
     try {
-        const customer: CustomerModel = req.body;
-        console.log(customer);
+        const {
+            name,
+            phone,
+            address,
+            latitude,
+            longitude
+        } = req.body;
+        console.log(req.body);
 
         const sql = 'insert into customers (name, phone, address, latitude, longitude) values (?, ?, ?, ?, ?)';
 
         const [result] = await conn.query<ResultSetHeader>(sql,
-            [customer.name, customer.phone, customer.address, customer.latitude, customer.longitude]
+            [name, phone, address, latitude, longitude]
         );
 
         res.status(201).json({
