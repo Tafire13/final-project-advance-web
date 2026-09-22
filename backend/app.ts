@@ -1,6 +1,6 @@
 import express from "express";
-import { router as customerRoutes } from "./routes/customerRoutes";
-import { router as orderRoutes} from './routes/orderRoutes';
+import { router as customerRoutes } from "./src/routes/customerRoutes";
+import { router as orderRoutes} from './src/routes/orderRoutes';
 
 export const app = express();
 

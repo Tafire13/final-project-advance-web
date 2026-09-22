@@ -58,7 +58,7 @@ export const createOrder = async (req: Request, res: Response) => {
             });
         }
 
-        const [customers] = await conn.query('SELECT id FROM customers WHERE id = ? and deleted_at IS NULL', [customer_id]);
+        const [customers] = await conn.query('SELECT id FROM customers WHERE id = ? and deleted_at IS NULL', [order.customer_id]);
 
         const customerRows = customers as any[];
         
@@ -214,10 +214,7 @@ export const deleteOrderByID = async (req: Request,res: Response) => {
     }
 };
 
-export const randomOrder = async (
-    req: Request,
-    res: Response
-) => {
+export const randomOrder = async (req: Request,res: Response) => {
     try {
         const amount = Number(req.body.amount ?? 10);
 
@@ -227,7 +224,7 @@ export const randomOrder = async (
              WHERE deleted_at IS NULL`
         );
 
-        const customers = rows as { id: number }[];
+        const customers = rows as {id: number}[];
 
         if (customers.length === 0) {
             return res.status(400).json({
