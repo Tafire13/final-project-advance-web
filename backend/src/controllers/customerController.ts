@@ -4,75 +4,67 @@ import { CustomerModel } from "../models/customerModel";
 import { ResultSetHeader } from "mysql2";
 
 export const getCustomers = async (req: Request, res: Response) => {
-    const [rows] = await conn.query('select * from customers');
-    const customers = rows as CustomerModel[];
-    res.json(customers);
-}
+    try {
+        const [rows] = await conn.query('SELECT * FROM customers');
+        const customers = rows as CustomerModel[];
+        return res.json(customers); 
+    } catch (err: any) {
+        console.error("Error in getCustomers:", err);
+        return res.status(500).json({
+            error: "Database error",
+            details: err?.message || String(err)
+        });
+    }
+};
 
 export const getCustomersByID = async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const [rows] = await conn.query('select * from customers where id = ?', [
-            id
-        ]);
-
+        const [rows] = await conn.query('SELECT * FROM customers WHERE id = ?', [id]);
         const customers = rows as CustomerModel[];
 
         if (customers.length === 0) {
-            res.status(404).json({
+            return res.status(404).json({
                 error: "Customer not found"
             });
         }
 
-        const customer = customers[0];
-
-
-        res.json(customer);
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            error: "Database error"
+        return res.json(customers[0]);
+    } catch (err: any) {
+        console.error("Error in getCustomersByID:", err);
+        return res.status(500).json({
+            error: "Database error",
+            details: err?.message || String(err)
         });
     }
-}
+};
 
 export const createCustomer = async (req: Request, res: Response) => {
     try {
-        const {
-            name,
-            phone,
-            address,
-            latitude,
-            longitude
-        } = req.body;
-        console.log(req.body);
+        const { name, phone, address, latitude, longitude } = req.body;
 
-        const sql = 'insert into customers (name, phone, address, latitude, longitude) values (?, ?, ?, ?, ?)';
+        const sql = 'INSERT INTO customers (name, phone, address, latitude, longitude) VALUES (?, ?, ?, ?, ?)';
+        const [result] = await conn.query<ResultSetHeader>(sql, [name, phone, address, latitude, longitude]);
 
-        const [result] = await conn.query<ResultSetHeader>(sql,
-            [name, phone, address, latitude, longitude]
-        );
-
-        res.status(201).json({
+        return res.status(201).json({ 
             affected_rows: result.affectedRows,
             last_id: result.insertId
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            error: "Database error"
+    } catch (err: any) {
+        console.error("Error in createCustomer:", err);
+        return res.status(500).json({ 
+            error: "Database error",
+            details: err?.message || String(err)
         });
     }
-}
+};
 
 export const deleteCustomerByID = async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
+        await conn.query('DELETE FROM orders WHERE customer_id = ?', [id]);
 
-        const [result] = await conn.query<ResultSetHeader>('DELETE FROM customers WHERE id = ?',
-            [id]
-        );
+        const [result] = await conn.query<ResultSetHeader>('DELETE FROM customers WHERE id = ?', [id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
@@ -80,39 +72,23 @@ export const deleteCustomerByID = async (req: Request, res: Response) => {
             });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
+            message: "Deleted customer and related orders successfully",
             affected_row: result.affectedRows
         });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            error: 'Database error'
+    } catch (err: any) {
+        console.error("Error in deleteCustomerByID:", err);
+        return res.status(500).json({
+            error: 'Database error',
+            details: err?.message || String(err)
         });
     }
-}
+};
 
 export const updateCustomerByID = async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const customer: CustomerModel = req.body;
-
-        const [rows] = await conn.query(
-            'SELECT * FROM customers WHERE id = ?',
-            [id]
-        );
-
-        const customers = rows as CustomerModel[];
-
-        if (customers.length === 0) {
-            return res.status(404).json({
-                error: "Customer not found"
-            });
-        }
-
-        const customerOriginal = customers[0];
-
-        const updateCustomer = {...customerOriginal, ...customer};
+        const { name, phone, address, latitude, longitude } = req.body;
 
         const sql = `
             UPDATE customers
@@ -124,27 +100,29 @@ export const updateCustomerByID = async (req: Request, res: Response) => {
             WHERE id = ?
         `;
 
-        const [result] = await conn.query<ResultSetHeader>(
-            sql,
-            [
-                updateCustomer.name,
-                updateCustomer.phone,
-                updateCustomer.address,
-                updateCustomer.latitude,
-                updateCustomer.longitude,
-                id
-            ]
-        );
+        const [result] = await conn.query<ResultSetHeader>(sql, [
+            name,
+            phone,
+            address,
+            latitude,
+            longitude,
+            id
+        ]);
 
-        res.status(200).json({
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                error: "Customer not found"
+            });
+        }
+
+        return res.status(200).json({
             affected_row: result.affectedRows
         });
-
-    } catch (err) {
-        console.error(err);
-
-        res.status(500).json({
-            error: "Database error"
+    } catch (err: any) {
+        console.error("Error in updateCustomerByID:", err);
+        return res.status(500).json({ 
+            error: "Database error",
+            details: err?.message || String(err)
         });
     }
 };
