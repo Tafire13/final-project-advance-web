@@ -108,8 +108,7 @@ export const updateOrderByID = async (req: Request,res: Response) => {
         }
 
         const originalOrder = orders[0];
-        return res.json(order);
-
+        
         const updatedOrder = {
             ...originalOrder,
             ...order
@@ -157,6 +156,8 @@ export const updateOrderByID = async (req: Request,res: Response) => {
             message: "Order updated successfully",
             affected_rows: result.affectedRows
         });
+    
+        
 
     } catch (err) {
         console.error(err);
