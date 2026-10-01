@@ -1,0 +1,95 @@
+<div class="min-h-screen bg-slate-100 p-4 md:p-8 font-sans text-slate-800">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <div class="bg-white p-6 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">🧾 ใบงานจัดส่ง (Delivery Jobs)</h1>
+        <p class="text-xs text-slate-500 mt-1">ดูใบงานทั้งหมดว่า Rider คนไหนได้ออเดอร์ไหน จำนวนกี่กล่อง ระยะทาง เวลา และเลขใบงาน</p>
+      </div>
+      <span class="px-3 py-1 bg-slate-100 rounded-full text-xs font-semibold">ทั้งหมด {{ jobs.length }} ใบงาน</span>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-2">
+      <input [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="ค้นหาเลขใบงาน เช่น JOB001 / ชื่อไรเดอร์ / เบอร์โทร"
+        class="flex-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm" />
+      <button (click)="onSearch()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold">ค้นหา</button>
+      <button *ngIf="search" (click)="search=''; loadJobs()" class="px-4 py-2.5 bg-slate-100 rounded-xl text-sm">ล้าง</button>
+    </div>
+
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 border-b uppercase text-slate-400">
+            <tr>
+              <th class="py-4 px-5">เลขใบงาน</th>
+              <th class="py-4 px-5">Rider</th>
+              <th class="py-4 px-5">วันที่ส่ง</th>
+              <th class="py-4 px-5 text-center">ออเดอร์</th>
+              <th class="py-4 px-5 text-center">กล่อง</th>
+              <th class="py-4 px-5 text-center">ระยะทาง</th>
+              <th class="py-4 px-5 text-center">เวลา</th>
+              <th class="py-4 px-5 text-center">ค่าส่ง</th>
+              <th class="py-4 px-5 text-center">ดูงาน</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y">
+            <tr *ngIf="loading"><td colspan="9" class="py-8 text-center text-slate-400">กำลังโหลด...</td></tr>
+            <tr *ngIf="!loading && jobs.length === 0"><td colspan="9" class="py-8 text-center text-slate-400">ยังไม่มีใบงาน — ไปคำนวณที่หน้า Route Planning ก่อน</td></tr>
+            <tr *ngFor="let j of jobs" class="hover:bg-slate-50">
+              <td class="py-3 px-5">
+                <span class="font-mono font-bold px-2 py-1 rounded-md text-white text-[11px]" [style.background]="j.color">{{ j.job_code }}</span>
+              </td>
+              <td class="py-3 px-5">
+                <p class="font-semibold">{{ j.rider_name }}</p>
+                <p class="text-slate-400">{{ j.rider_phone }}</p>
+              </td>
+              <td class="py-3 px-5">{{ j.delivery_date }}</td>
+              <td class="py-3 px-5 text-center font-bold">{{ j.total_orders }}</td>
+              <td class="py-3 px-5 text-center">{{ j.total_boxes }} กล่อง</td>
+              <td class="py-3 px-5 text-center">{{ j.distance_km }} km</td>
+              <td class="py-3 px-5 text-center">{{ j.duration_minutes }} นาที</td>
+              <td class="py-3 px-5 text-center">฿{{ j.delivery_cost }}</td>
+              <td class="py-3 px-5 text-center">
+                <button (click)="openDetail(j.job_code)" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-bold">รายละเอียด</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="selected" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-5 flex justify-between items-start" [style.borderTop]="'6px solid ' + selected.color">
+          <div>
+            <h3 class="font-bold">ใบงาน <span class="font-mono">{{ selected.job_code }}</span></h3>
+            <p class="text-xs text-slate-500">{{ selected.rider_name }} ({{ selected.rider_phone }}) • ส่ง {{ selected.delivery_date }}</p>
+            <p class="text-xs mt-1">{{ stopRouteText() }} พร้อมปุ่มเปิดแผนที่</p>
+          </div>
+          <button (click)="closeDetail()" class="text-slate-400 font-bold">✕</button>
+        </div>
+        <div class="px-5 grid grid-cols-4 gap-2 text-center text-xs pb-3">
+          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">กล่อง</p><p class="font-bold">{{ selected.total_boxes }}</p></div>
+          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">ระยะ</p><p class="font-bold">{{ selected.distance_km }} km</p></div>
+          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">เวลา</p><p class="font-bold">{{ selected.duration_minutes }} นาที</p></div>
+          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">ค่าส่ง</p><p class="font-bold">฿{{ selected.delivery_cost }}</p></div>
+        </div>
+        <div class="px-5 pb-4 space-y-2">
+          <div *ngFor="let s of selected.stops" class="border rounded-xl p-3 text-xs flex justify-between">
+            <div>
+              <p class="font-bold">จุดที่ {{ s.stop_sequence }} → {{ s.customer_name }} ({{ s.quantity }} กล่อง)</p>
+              <p class="text-slate-500">{{ s.address }} • {{ s.phone }}</p>
+              <p class="text-slate-400">Order #{{ s.order_id }} • ห่างจากจุดก่อน {{ s.distance_from_previous_km }} km</p>
+            </div>
+            <div class="text-right"><p class="font-mono font-bold">{{ s.arrival_time }}</p><p class="text-slate-400">ถึงโดยประมาณ</p></div>
+          </div>
+        </div>
+        <div class="p-4 border-t flex gap-2">
+          <button (click)="openNav(selected.navigation_url)" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">🗺️ เปิดแผนที่นำทาง</button>
+          <button (click)="closeDetail()" class="px-5 py-2.5 bg-slate-100 rounded-xl text-xs">ปิด</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
