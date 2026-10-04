@@ -7,7 +7,7 @@ import { CustomerModel, OrderModel, CreateOrderModel, UpdateOrderModel, RiderMod
   providedIn: 'root'
 })
 export class ApiService {
-  private api_url = 'http://localhost:3000/api';
+  private api_url = 'https://final-project-adv-web-backend.vercel.app/api';
 
   constructor(private http: HttpClient) { }
 

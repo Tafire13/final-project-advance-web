@@ -21,7 +21,7 @@ export class OrderManagement implements OnInit {
     selectedCustomerId: string | number = '';
     quantity = 1;
     orderDate = new Date().toISOString().split('T')[0];
-    randomAmount = 10;
+    randomAmount = 20;
 
     constructor(private api: ApiService) { }
 
@@ -100,14 +100,21 @@ export class OrderManagement implements OnInit {
     }
 
     onRandom(): void {
+        const amount = Number(this.randomAmount);
+
+        if (!Number.isInteger(amount) || amount < 1 || amount > 30) {
+            alert('จำนวนออเดอร์จำลองต้องเป็นจำนวนเต็มระหว่าง 1-30 รายการ');
+            return;
+        }
+
         this.api.randomOrder(this.randomAmount).subscribe({
             next: () => {
                 alert(`สุ่มออเดอร์สำเร็จจำนวน ${this.randomAmount} รายการ`);
                 this.reloadAllData();
             },
-            error: (err: unknown) => {
+            error: (err: any) => {
                 console.error(err);
-                alert('ไม่สามารถสุ่มออเดอร์ได้');
+                alert(err?.error?.error || 'ไม่สามารถสุ่มออเดอร์ได้');
             }
         });
     }
