@@ -5,10 +5,6 @@ export interface CustomerModel {
   address: string;
   latitude: string;
   longitude: string;
-  is_demo?: number;
-  deleted_at?: string | null;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface OrderModel {
@@ -18,8 +14,6 @@ export interface OrderModel {
   order_date: string;
   status: string;
   is_demo: number;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface CreateOrderModel {
@@ -71,7 +65,6 @@ export interface PlannedRouteModel {
   rider_name: string;
   rider_phone: string;
   color: string;
-  color_name: string;
   total_boxes: number;
   distance_km: number;
   duration_minutes: number;
@@ -95,7 +88,6 @@ export interface PlanResultModel {
   revenue: number;
   food_cost: number;
   profit: number;
-  max_duration_minutes: number;
   last_arrival_time: string;
   all_on_time: boolean;
   shop: { name: string; latitude: number; longitude: number };
@@ -104,7 +96,6 @@ export interface PlanResultModel {
 
 export interface DeliveryJobModel {
   job_code: string;
-  job_status: string;
   delivery_date: string;
   plan_id: number;
   route_id: number;
@@ -113,7 +104,6 @@ export interface DeliveryJobModel {
   rider_name: string;
   rider_phone: string;
   color: string;
-  color_name: string;
   total_boxes: number;
   distance_km: number | string;
   duration_minutes: number;
@@ -129,5 +119,4 @@ export interface DeliveryJobDetailModel extends DeliveryJobModel {
   all_on_time: number | boolean;
   geometry: number[][] | string;
   stops: RouteStopModel[];
-  issued_at?: string;
 }
