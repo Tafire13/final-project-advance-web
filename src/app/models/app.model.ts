@@ -14,6 +14,7 @@ export interface OrderModel {
   order_date: string;
   status: string;
   is_demo: number;
+  customer?: CustomerModel;
 }
 
 export interface CreateOrderModel {

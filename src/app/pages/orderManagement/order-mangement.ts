@@ -102,8 +102,8 @@ export class OrderManagement implements OnInit {
     onRandom(): void {
         const amount = Number(this.randomAmount);
 
-        if (!Number.isInteger(amount) || amount < 1 || amount > 30) {
-            alert('จำนวนออเดอร์จำลองต้องเป็นจำนวนเต็มระหว่าง 1-30 รายการ');
+        if (!Number.isInteger(amount) || amount < 20 || amount > 30) {
+            alert('จำนวนออเดอร์จำลองต้องเป็นจำนวนเต็มระหว่าง 20-30 รายการ');
             return;
         }
 
@@ -120,7 +120,7 @@ export class OrderManagement implements OnInit {
     }
 
     onCancel(id: number): void {
-        if (!confirm('ยกเลิกรายการออเดอร์นี้ ?')) return;
+        if (!confirm('ต้องการลบรายการออเดอร์นี้ใช่หรือไม่ ?')) return;
 
         this.api.deleteOrderByID(id).subscribe({
             next: () => this.reloadAllData(),

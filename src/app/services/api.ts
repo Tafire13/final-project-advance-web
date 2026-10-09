@@ -53,7 +53,7 @@ export class ApiService {
     return this.http.delete(`${this.api_url}/order/${id}`);
   }
 
-  randomOrder(amount: number = 10): Observable<any> {
+  randomOrder(amount: number = 20): Observable<any> {
     return this.http.post(`${this.api_url}/order/random`, { amount });
   }
 
