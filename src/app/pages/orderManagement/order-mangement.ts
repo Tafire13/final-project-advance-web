@@ -158,4 +158,18 @@ export class OrderManagement implements OnInit {
         this.quantity = 1;
         this.orderDate = new Date().toISOString().split('T')[0];
     }
+
+    clearDemoOrder(): void {
+        this.ordersLoading.set(true);
+
+        this.orderApi.clearDemoOrder().subscribe({
+            next: () => {
+                this.reloadAllData();
+            },
+            error: (err: any) => {
+                this.ordersLoading.set(false);
+                alert(err.error?.error || 'เกิดข้อผิดพลาด');
+            }
+        });
+    }
 }

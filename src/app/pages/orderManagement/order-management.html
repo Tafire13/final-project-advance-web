@@ -8,10 +8,7 @@
       <p class="text-sm text-slate-600" role="status">
         {{ loading() ? 'กำลังโหลดข้อมูลออเดอร์...' : 'ทั้งหมด ' + orders().length + ' รายการ' }}
       </p>
-      <button
-        type="button"
-        (click)="reloadAllData()"
-        [disabled]="loading()"
+      <button type="button" (click)="reloadAllData()" [disabled]="loading()"
         class="min-h-11 border border-slate-400 bg-white px-4 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50">
         {{ loading() ? 'กำลังโหลด...' : 'โหลดข้อมูลใหม่' }}
       </button>
@@ -24,10 +21,7 @@
         <h2 id="order-form-title" class="text-lg font-semibold text-slate-900">
           {{ isEditMode ? 'แก้ไขออเดอร์ #' + editingOrderId : 'เพิ่มออเดอร์ใหม่' }}
         </h2>
-        <button
-          *ngIf="isEditMode"
-          type="button"
-          (click)="resetForm()"
+        <button *ngIf="isEditMode" type="button" (click)="resetForm()"
           class="min-h-11 border border-slate-300 px-4 text-sm hover:bg-slate-100">
           ยกเลิกแก้ไข
         </button>
@@ -36,7 +30,8 @@
       <div class="space-y-4">
         <div>
           <label for="order-customer" class="mb-1 block text-sm font-medium text-slate-700">ลูกค้า</label>
-          <select id="order-customer" [(ngModel)]="selectedCustomerId" class="min-h-11 w-full border border-slate-300 bg-white px-3">
+          <select id="order-customer" [(ngModel)]="selectedCustomerId"
+            class="min-h-11 w-full border border-slate-300 bg-white px-3">
             <option value="">เลือกลูกค้า</option>
             <option *ngFor="let c of customers()" [value]="c.id">{{ c.name }} ({{ c.phone }})</option>
           </select>
@@ -45,15 +40,18 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label for="order-quantity" class="mb-1 block text-sm font-medium text-slate-700">จำนวนกล่อง (1–3)</label>
-            <input id="order-quantity" type="number" min="1" max="3" [(ngModel)]="quantity" class="min-h-11 w-full border border-slate-300 px-3" />
+            <input id="order-quantity" type="number" min="1" max="3" [(ngModel)]="quantity"
+              class="min-h-11 w-full border border-slate-300 px-3" />
           </div>
           <div>
             <label for="order-date" class="mb-1 block text-sm font-medium text-slate-700">วันที่สั่งซื้อ</label>
-            <input id="order-date" type="date" [(ngModel)]="orderDate" class="min-h-11 w-full border border-slate-300 px-3" />
+            <input id="order-date" type="date" [(ngModel)]="orderDate"
+              class="min-h-11 w-full border border-slate-300 px-3" />
           </div>
         </div>
 
-        <button type="button" (click)="onSaveOrder()" class="min-h-11 bg-blue-600 px-5 font-medium text-white hover:bg-blue-700">
+        <button type="button" (click)="onSaveOrder()"
+          class="min-h-11 bg-blue-600 px-5 font-medium text-white hover:bg-blue-700">
           {{ isEditMode ? 'บันทึกการแก้ไข' : 'เพิ่มออเดอร์' }}
         </button>
       </div>
@@ -65,11 +63,17 @@
 
       <div class="mt-4">
         <label for="random-amount" class="mb-1 block text-sm font-medium text-slate-700">จำนวนรายการ</label>
-        <input id="random-amount" type="number" min="20" max="30" step="1" [(ngModel)]="randomAmount" class="min-h-11 w-full border border-slate-300 px-3" />
+        <input id="random-amount" type="number" min="20" max="30" step="1" [(ngModel)]="randomAmount"
+          class="min-h-11 w-full border border-slate-300 px-3" />
       </div>
 
-      <button type="button" (click)="onRandom()" class="mt-4 min-h-11 w-full bg-blue-600 px-4 font-medium text-white hover:bg-blue-700">
+      <button type="button" (click)="onRandom()"
+        class="mt-4 min-h-11 w-full bg-blue-600 px-4 font-medium text-white hover:bg-blue-700">
         สร้างออเดอร์จำลอง
+      </button>
+      <button type="button" (click)="clearDemoOrder()" [disabled]="ordersLoading()" class="mt-4 min-h-11 w-full bg-red-600 px-4 font-medium text-white
+         hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+        {{ ordersLoading() ? 'กำลังล้างออเดอร์...' : 'ล้างออเดอร์จำลอง' }}
       </button>
     </section>
   </div>
@@ -116,8 +120,10 @@
             <td class="px-4 py-3">{{ item.is_demo ? 'จำลอง' : 'จริง' }}</td>
             <td class="px-4 py-3">
               <div class="flex justify-end gap-2">
-                <button type="button" (click)="onEditOrder(item)" class="min-h-11 border border-slate-300 px-3 hover:bg-slate-100">แก้ไข</button>
-                <button type="button" (click)="onCancel(item.id)" class="min-h-11 border border-red-600 px-3 text-red-700 hover:bg-red-50">ลบ</button>
+                <button type="button" (click)="onEditOrder(item)"
+                  class="min-h-11 border border-slate-300 px-3 hover:bg-slate-100">แก้ไข</button>
+                <button type="button" (click)="onCancel(item.id)"
+                  class="min-h-11 border border-red-600 px-3 text-red-700 hover:bg-red-50">ลบ</button>
               </div>
             </td>
           </tr>

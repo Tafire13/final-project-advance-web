@@ -18,22 +18,61 @@
       </div>
 
       <div>
-        <label for="rider-count" class="mb-1 block text-sm font-medium text-slate-700">จำนวนไรเดอร์ (1–10)</label>
-        <input id="rider-count" type="number" min="1" max="10" [(ngModel)]="riderCount" class="min-h-11 w-full border border-slate-300 px-3" />
-        <p class="mt-1 text-sm text-slate-600">มีไรเดอร์ในระบบ {{ riders().length }} คน และรับได้สูงสุด 3 จุดต่อคน</p>
+        <label for="rider-count" class="mb-1 block text-sm font-medium text-slate-700">จำนวนไรเดอร์ที่จะใช้</label>
+        <input
+          id="rider-count"
+          type="number"
+          [min]="minimumRiders()"
+          [max]="maximumRiders() || 10"
+          [(ngModel)]="riderCount"
+          (ngModelChange)="errorMsg.set('')"
+          [disabled]="loading() || ridersLoading() || pendingCount() === 0"
+          [attr.aria-invalid]="riderCountValidationMessage() ? 'true' : null"
+          aria-describedby="rider-help rider-error"
+          class="min-h-11 w-full border border-slate-300 px-3 disabled:bg-slate-100"
+        />
+        <p id="rider-help" class="mt-1 text-sm text-slate-600">
+          <span *ngIf="ridersLoading()">กำลังโหลดข้อมูลไรเดอร์...</span>
+          <span *ngIf="!ridersLoading() && pendingCount()">
+            ออเดอร์ {{ pendingCount() }} รายการ ต้องใช้ขั้นต่ำ {{ minimumRiders() }} คน
+            (สูงสุด 3 จุดต่อคน) และมีไรเดอร์ในระบบ {{ riders().length }} คน
+          </span>
+          <span *ngIf="!ridersLoading() && pendingCount() === 0">ไม่มีออเดอร์รอจัดส่งในวันที่เลือก</span>
+        </p>
+        <p id="rider-error" *ngIf="riderCountValidationMessage()" class="mt-1 text-sm text-red-700" role="alert">
+          {{ riderCountValidationMessage() }}
+        </p>
       </div>
 
       <div>
         <button
           type="button"
           (click)="onCalculate()"
-          [disabled]="calculating()"
+          [disabled]="!canCalculate()"
           class="min-h-11 w-full bg-blue-600 px-4 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
           {{ calculating() ? 'กำลังคำนวณ...' : 'คำนวณและแบ่งงาน' }}
         </button>
         <p *ngIf="errorMsg()" class="mt-2 text-sm text-red-700" role="alert">{{ errorMsg() }}</p>
       </div>
     </div>
+  </section>
+
+  <section class="border border-slate-300 bg-white" aria-labelledby="route-map-title">
+    <div class="border-b border-slate-300 px-4 py-3">
+      <h2 id="route-map-title" class="font-semibold text-slate-900">
+        แผนที่เส้นทาง
+        <span *ngIf="plan() as currentPlan">วันที่ {{ currentPlan.delivery_date }}</span>
+      </h2>
+      <p *ngIf="!plan()" class="text-sm text-slate-600">
+        ขณะนี้แสดงตำแหน่งร้าน จุดส่งและเส้นทางจะแสดงหลังจากกดคำนวณและแบ่งงาน
+      </p>
+      <p *ngIf="plan()" class="text-sm text-slate-600">
+        เส้นแต่ละสีแทนเส้นทางของไรเดอร์แต่ละคน
+      </p>
+      <p *ngIf="mapLoading()" class="mt-1 text-sm text-slate-600" role="status">กำลังโหลดแผนที่...</p>
+      <p *ngIf="mapError()" class="mt-1 text-sm text-red-700" role="alert">{{ mapError() }}</p>
+    </div>
+    <div id="route-map" class="h-[480px] w-full bg-slate-100" aria-label="แผนที่ตำแหน่งร้านและเส้นทางจัดส่ง"></div>
   </section>
 
   <div *ngIf="plan() as currentPlan" class="space-y-6">
@@ -55,14 +94,6 @@
           <dd class="text-sm" [ngClass]="currentPlan.all_on_time ? 'text-green-700' : 'text-red-700'">{{ currentPlan.all_on_time ? 'ทันเวลา' : 'เกินเวลา' }}</dd>
         </div>
       </dl>
-    </section>
-
-    <section class="border border-slate-300 bg-white" aria-labelledby="route-map-title">
-      <div class="border-b border-slate-300 px-4 py-3">
-        <h2 id="route-map-title" class="font-semibold text-slate-900">แผนที่เส้นทาง วันที่ {{ currentPlan.delivery_date }}</h2>
-        <p class="text-sm text-slate-600">เส้นแต่ละสีแทนเส้นทางของไรเดอร์แต่ละคน</p>
-      </div>
-      <div id="route-map" class="h-[480px] w-full"></div>
     </section>
 
     <section aria-labelledby="rider-routes-title">

@@ -22,3 +22,8 @@ export interface UpdateOrderModel {
   order_date?: string;
   status?: string;
 }
+
+export interface ClearDemoOrderResponse {
+  message: string;
+  deleted_orders: number;
+}
