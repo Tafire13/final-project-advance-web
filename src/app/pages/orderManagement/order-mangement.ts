@@ -2,8 +2,10 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ApiService } from '../../services/api';
-import type { CustomerModel, OrderModel } from '../../models/app.model';
+import { CustomerApiService } from '../../services/customer/customer-api.service';
+import { OrderApiService } from '../../services/order/order-api.service';
+import type { CustomerModel } from '../../models/customer/customer.model';
+import type { OrderModel } from '../../models/order/order.model';
 
 @Component({
     selector: 'app-order',
@@ -26,7 +28,10 @@ export class OrderManagement implements OnInit {
     orderDate = new Date().toISOString().split('T')[0];
     randomAmount = 20;
 
-    constructor(private api: ApiService) { }
+    constructor(
+        private orderApi: OrderApiService,
+        private customerApi: CustomerApiService
+    ) { }
 
     ngOnInit(): void {
         this.reloadAllData();
@@ -36,7 +41,7 @@ export class OrderManagement implements OnInit {
         this.ordersLoading.set(true);
         this.customersLoading.set(true);
 
-        this.api.getOrder().subscribe({
+        this.orderApi.getOrder().subscribe({
             next: (res) => {
                 this.orders.set(res || []);
                 this.ordersLoading.set(false);
@@ -47,7 +52,7 @@ export class OrderManagement implements OnInit {
             }
         });
 
-        this.api.getCustomers().subscribe({
+        this.customerApi.getCustomers().subscribe({
             next: (res) => {
                 this.customers.set(res || []);
                 this.customersLoading.set(false);
@@ -77,7 +82,7 @@ export class OrderManagement implements OnInit {
         };
 
         if (this.isEditMode && this.editingOrderId !== null) {
-            this.api.updateOrderByID(this.editingOrderId, payload).subscribe({
+            this.orderApi.updateOrderByID(this.editingOrderId, payload).subscribe({
                 next: () => {
                     alert('แก้ไขออเดอร์สำเร็จ');
                     this.resetForm();
@@ -86,7 +91,7 @@ export class OrderManagement implements OnInit {
                 error: (err: any) => alert(err.error?.error || 'ไม่สามารถแก้ไขออเดอร์ได้')
             });
         } else {
-            this.api.createOrder(payload).subscribe({
+            this.orderApi.createOrder(payload).subscribe({
                 next: () => {
                     alert('สร้างรายการออเดอร์สำเร็จ');
                     this.resetForm();
@@ -125,7 +130,7 @@ export class OrderManagement implements OnInit {
             return;
         }
 
-        this.api.randomOrder(this.randomAmount).subscribe({
+        this.orderApi.randomOrder(this.randomAmount).subscribe({
             next: () => {
                 alert(`สุ่มออเดอร์สำเร็จจำนวน ${this.randomAmount} รายการ`);
                 this.reloadAllData();
@@ -140,7 +145,7 @@ export class OrderManagement implements OnInit {
     onCancel(id: number): void {
         if (!confirm('ต้องการลบรายการออเดอร์นี้ใช่หรือไม่ ?')) return;
 
-        this.api.deleteOrderByID(id).subscribe({
+        this.orderApi.deleteOrderByID(id).subscribe({
             next: () => this.reloadAllData(),
             error: (err: any) => alert(err.error?.error || 'เกิดข้อผิดพลาด')
         });

@@ -2,8 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
-import { ApiService } from '../../services/api';
-import type { PlanResultModel, RiderModel } from '../../models/app.model';
+import { PlanningApiService } from '../../services/planning/planning-api.service';
+import type { PlanResultModel, RiderModel } from '../../models/planning/planning.model';
 
 @Component({
   selector: 'app-route-planning',
@@ -23,10 +23,10 @@ export class RoutePlanning implements OnInit {
 
   private map: L.Map | null = null;
 
-  constructor(private api: ApiService) {}
+  constructor(private planningApi: PlanningApiService) {}
 
   ngOnInit(): void {
-    this.api.getRiders().subscribe({
+    this.planningApi.getRiders().subscribe({
       next: (r) => this.riders.set(r || []),
       error: (e) => console.error('load riders fail', e)
     });
@@ -37,7 +37,7 @@ export class RoutePlanning implements OnInit {
     this.pendingCount.set(null);
     if (!this.deliveryDate) return;
     this.loading.set(true);
-    this.api.getPendingOrders(this.deliveryDate).subscribe({
+    this.planningApi.getPendingOrders(this.deliveryDate).subscribe({
       next: (rows) => {
         this.pendingCount.set(rows?.length ?? 0);
         this.loading.set(false);
@@ -60,7 +60,7 @@ export class RoutePlanning implements OnInit {
       return;
     }
     this.calculating.set(true);
-    this.api.calculateRoute({ delivery_date: this.deliveryDate, rider_count: Number(this.riderCount) }).subscribe({
+    this.planningApi.calculateRoute({ delivery_date: this.deliveryDate, rider_count: Number(this.riderCount) }).subscribe({
       next: (res) => {
         this.plan.set(res);
         this.calculating.set(false);

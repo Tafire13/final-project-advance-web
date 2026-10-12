@@ -2,8 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ApiService } from '../../services/api';
-import type { CustomerModel } from '../../models/app.model';
+import { CustomerApiService } from '../../services/customer/customer-api.service';
+import type { CustomerModel } from '../../models/customer/customer.model';
 
 @Component({
     selector: 'app-customer',
@@ -29,7 +29,7 @@ export class CustomerManagement implements OnInit {
     };
 
     constructor(
-        private api: ApiService,
+        private customerApi: CustomerApiService,
         private sanitizer: DomSanitizer
     ) { }
 
@@ -39,7 +39,7 @@ export class CustomerManagement implements OnInit {
 
     loadCustomers(): void {
         this.loading.set(true);
-        this.api.getCustomers().subscribe({
+        this.customerApi.getCustomers().subscribe({
             next: (data) => {
                 this.customers.set(data || []);
                 this.loading.set(false);
@@ -70,8 +70,8 @@ export class CustomerManagement implements OnInit {
         }
 
         const req$ = this.isEdit
-            ? this.api.updateCustomerByID(String(this.currentId), this.form)
-            : this.api.createCustomer(this.form);
+            ? this.customerApi.updateCustomerByID(String(this.currentId), this.form)
+            : this.customerApi.createCustomer(this.form);
 
         req$.subscribe({
             next: () => {
@@ -93,7 +93,7 @@ export class CustomerManagement implements OnInit {
         }
         if (!confirm('ยืนยันลบลูกค้ารายนี้ ?')) return;
 
-        this.api.deleteCustomerByID(String(id)).subscribe({
+        this.customerApi.deleteCustomerByID(String(id)).subscribe({
             next: () => {
                 alert('ลบข้อมูลเรียบร้อย');
                 this.loadCustomers();

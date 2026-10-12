@@ -1,8 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../services/api';
-import type { DeliveryJobDetailModel, DeliveryJobModel } from '../../models/app.model';
+import { JobApiService } from '../../services/job/job-api.service';
+import type { DeliveryJobDetailModel, DeliveryJobModel } from '../../models/job/job.model';
 
 @Component({
   selector: 'app-delivery-jobs',
@@ -17,7 +17,7 @@ export class DeliveryJobs implements OnInit {
   readonly selected = signal<DeliveryJobDetailModel | null>(null);
   readonly detailLoading = signal(false);
 
-  constructor(private api: ApiService) {}
+  constructor(private jobApi: JobApiService) {}
 
   ngOnInit(): void {
     this.loadJobs();
@@ -25,7 +25,7 @@ export class DeliveryJobs implements OnInit {
 
   loadJobs(): void {
     this.loading.set(true);
-    this.api.getJobs(this.search.trim()).subscribe({
+    this.jobApi.getJobs(this.search.trim()).subscribe({
       next: (res) => {
         this.jobs.set(res || []);
         this.loading.set(false);
@@ -44,7 +44,7 @@ export class DeliveryJobs implements OnInit {
   openDetail(code: string): void {
     if (!code) return;
     this.detailLoading.set(true);
-    this.api.getJobByCode(code).subscribe({
+    this.jobApi.getJobByCode(code).subscribe({
       next: (res) => {
         this.selected.set(res);
         this.detailLoading.set(false);
