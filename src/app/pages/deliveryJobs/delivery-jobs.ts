@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
@@ -11,11 +11,11 @@ import type { DeliveryJobDetailModel, DeliveryJobModel } from '../../models/app.
   templateUrl: './delivery-jobs.html'
 })
 export class DeliveryJobs implements OnInit {
-  jobs: DeliveryJobModel[] = [];
+  readonly jobs = signal<DeliveryJobModel[]>([]);
   search = '';
-  loading = false;
-  selected: DeliveryJobDetailModel | null = null;
-  detailLoading = false;
+  readonly loading = signal(false);
+  readonly selected = signal<DeliveryJobDetailModel | null>(null);
+  readonly detailLoading = signal(false);
 
   constructor(private api: ApiService) {}
 
@@ -24,15 +24,15 @@ export class DeliveryJobs implements OnInit {
   }
 
   loadJobs(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.api.getJobs(this.search.trim()).subscribe({
       next: (res) => {
-        this.jobs = res || [];
-        this.loading = false;
+        this.jobs.set(res || []);
+        this.loading.set(false);
       },
       error: (e) => {
         console.error('load jobs fail', e);
-        this.loading = false;
+        this.loading.set(false);
       }
     });
   }
@@ -43,22 +43,22 @@ export class DeliveryJobs implements OnInit {
 
   openDetail(code: string): void {
     if (!code) return;
-    this.detailLoading = true;
+    this.detailLoading.set(true);
     this.api.getJobByCode(code).subscribe({
       next: (res) => {
-        this.selected = res;
-        this.detailLoading = false;
+        this.selected.set(res);
+        this.detailLoading.set(false);
       },
       error: (e) => {
         console.error(e);
         alert(e?.error?.error || 'ไม่พบใบงาน เช่น JOB001');
-        this.detailLoading = false;
+        this.detailLoading.set(false);
       }
     });
   }
 
   closeDetail(): void {
-    this.selected = null;
+    this.selected.set(null);
   }
 
   openNav(url: string): void {
@@ -66,8 +66,9 @@ export class DeliveryJobs implements OnInit {
   }
 
   stopRouteText(): string {
-    if (!this.selected?.stops) return '';
-    return this.selected.stops
+    const selected = this.selected();
+    if (!selected?.stops) return '';
+    return selected.stops
       .slice()
       .sort((a, b) => a.stop_sequence - b.stop_sequence)
       .map((s) => `จุดที่ ${s.stop_sequence}`)

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -12,8 +12,11 @@ import type { CustomerModel, OrderModel } from '../../models/app.model';
     templateUrl: './order-management.html'
 })
 export class OrderManagement implements OnInit {
-    orders: OrderModel[] = [];
-    customers: CustomerModel[] = [];
+    readonly orders = signal<OrderModel[]>([]);
+    readonly customers = signal<CustomerModel[]>([]);
+    readonly ordersLoading = signal(false);
+    readonly customersLoading = signal(false);
+    readonly loading = computed(() => this.ordersLoading() || this.customersLoading());
 
     isEditMode = false;
     editingOrderId: number | null = null;
@@ -30,14 +33,29 @@ export class OrderManagement implements OnInit {
     }
 
     reloadAllData(): void {
+        this.ordersLoading.set(true);
+        this.customersLoading.set(true);
+
         this.api.getOrder().subscribe({
-            next: (res) => (this.orders = res || []),
-            error: (err) => console.error('Error fetching orders:', err)
+            next: (res) => {
+                this.orders.set(res || []);
+                this.ordersLoading.set(false);
+            },
+            error: (err) => {
+                console.error('Error fetching orders:', err);
+                this.ordersLoading.set(false);
+            }
         });
 
         this.api.getCustomers().subscribe({
-            next: (res) => (this.customers = res || []),
-            error: (err) => console.error('Error fetching customers:', err)
+            next: (res) => {
+                this.customers.set(res || []);
+                this.customersLoading.set(false);
+            },
+            error: (err) => {
+                console.error('Error fetching customers:', err);
+                this.customersLoading.set(false);
+            }
         });
     }
 

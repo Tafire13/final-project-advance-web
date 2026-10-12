@@ -1,96 +1,126 @@
-<div class="min-h-screen bg-slate-50 p-6 font-sans text-slate-800">
-  <div class="max-w-6xl mx-auto space-y-6">
-    
-    <div class="flex justify-between items-center border-b pb-4">
-      <h1 class="text-xl font-bold">จัดการข้อมูลลูกค้า</h1>
-      <span class="text-sm text-slate-500">ทั้งหมด {{ customers.length }} ราย</span>
+<div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+  <header class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">จัดการลูกค้า</h1>
+      <p class="text-sm text-slate-600">เพิ่ม แก้ไข ลบ และดูตำแหน่งของลูกค้า</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <p class="text-sm text-slate-600" role="status">
+        {{ loading() ? 'กำลังโหลดข้อมูลลูกค้า...' : 'ทั้งหมด ' + customers().length + ' ราย' }}
+      </p>
+      <button
+        type="button"
+        (click)="loadCustomers()"
+        [disabled]="loading()"
+        class="min-h-11 border border-slate-400 bg-white px-4 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50">
+        {{ loading() ? 'กำลังโหลด...' : 'โหลดข้อมูลใหม่' }}
+      </button>
+    </div>
+  </header>
+
+  <section class="border border-slate-300 bg-white p-4 sm:p-5" aria-labelledby="customer-form-title">
+    <div class="mb-4 flex items-center justify-between gap-4">
+      <h2 id="customer-form-title" class="text-lg font-semibold text-slate-900">
+        {{ isEdit ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่' }}
+      </h2>
+      <button
+        *ngIf="isEdit"
+        type="button"
+        (click)="resetForm()"
+        class="min-h-11 border border-slate-300 px-4 text-sm text-slate-700 hover:bg-slate-100">
+        ยกเลิกแก้ไข
+      </button>
     </div>
 
-    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-      <h2 class="text-sm font-semibold mb-3">{{ isEdit ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่' }}</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-        <div>
-          <label class="block mb-1 text-slate-600">ชื่อ-นามสกุล</label>
-          <input [(ngModel)]="form.name" class="w-full p-2 border rounded-md" placeholder="สมชาย ใจดี">
-        </div>
-        <div>
-          <label class="block mb-1 text-slate-600">เบอร์โทรศัพท์</label>
-          <input [(ngModel)]="form.phone" class="w-full p-2 border rounded-md" placeholder="0812345678">
-        </div>
-        <div>
-          <label class="block mb-1 text-slate-600">ที่อยู่</label>
-          <input [(ngModel)]="form.address" class="w-full p-2 border rounded-md" placeholder="บ้านเลขที่...">
-        </div>
-        <div>
-          <label class="block mb-1 text-slate-600">Latitude</label>
-          <input [(ngModel)]="form.latitude" class="w-full p-2 border rounded-md">
-        </div>
-        <div>
-          <label class="block mb-1 text-slate-600">Longitude</label>
-          <input [(ngModel)]="form.longitude" class="w-full p-2 border rounded-md">
-        </div>
-        <div class="flex items-end gap-2">
-          <button (click)="onSubmit()" class="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-800 text-xs font-medium">
-            {{ isEdit ? 'อัปเดต' : 'บันทึก' }}
-          </button>
-          <button *ngIf="isEdit" (click)="resetForm()" class="px-3 py-2 bg-slate-200 text-slate-700 rounded-md text-xs">
-            ยกเลิก
-          </button>
-        </div>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div>
+        <label for="customer-name" class="mb-1 block text-sm font-medium text-slate-700">ชื่อ-นามสกุล</label>
+        <input id="customer-name" [(ngModel)]="form.name" class="min-h-11 w-full border border-slate-300 px-3" placeholder="สมชาย ใจดี" />
+      </div>
+      <div>
+        <label for="customer-phone" class="mb-1 block text-sm font-medium text-slate-700">เบอร์โทรศัพท์</label>
+        <input id="customer-phone" type="tel" [(ngModel)]="form.phone" class="min-h-11 w-full border border-slate-300 px-3" placeholder="0812345678" />
+      </div>
+      <div>
+        <label for="customer-address" class="mb-1 block text-sm font-medium text-slate-700">ที่อยู่</label>
+        <input id="customer-address" [(ngModel)]="form.address" class="min-h-11 w-full border border-slate-300 px-3" placeholder="บ้านเลขที่ ถนน ตำบล" />
+      </div>
+      <div>
+        <label for="customer-latitude" class="mb-1 block text-sm font-medium text-slate-700">Latitude</label>
+        <input id="customer-latitude" type="number" step="any" [(ngModel)]="form.latitude" class="min-h-11 w-full border border-slate-300 px-3" />
+      </div>
+      <div>
+        <label for="customer-longitude" class="mb-1 block text-sm font-medium text-slate-700">Longitude</label>
+        <input id="customer-longitude" type="number" step="any" [(ngModel)]="form.longitude" class="min-h-11 w-full border border-slate-300 px-3" />
+      </div>
+      <div class="flex items-end">
+        <button
+          type="button"
+          (click)="onSubmit()"
+          class="min-h-11 w-full bg-blue-600 px-4 font-medium text-white hover:bg-blue-700">
+          {{ isEdit ? 'บันทึกการแก้ไข' : 'เพิ่มลูกค้า' }}
+        </button>
       </div>
     </div>
+  </section>
 
-    <div class="bg-white rounded-xl border overflow-hidden">
-      <table class="w-full text-xs text-left">
-        <thead class="bg-slate-100 text-slate-500 uppercase">
+  <section class="border border-slate-300 bg-white" aria-labelledby="customer-list-title">
+    <div class="border-b border-slate-300 px-4 py-3">
+      <h2 id="customer-list-title" class="font-semibold text-slate-900">รายชื่อลูกค้า</h2>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[760px] text-left text-sm">
+        <thead class="bg-slate-100 text-slate-700">
           <tr>
-            <th class="p-3">ชื่อ</th>
-            <th class="p-3">เบอร์โทร</th>
-            <th class="p-3">ที่อยู่</th>
-            <th class="p-3">พิกัดแผนที่</th>
-            <th class="p-3 text-center">จัดการ</th>
+            <th class="px-4 py-3 font-medium">ชื่อ</th>
+            <th class="px-4 py-3 font-medium">เบอร์โทร</th>
+            <th class="px-4 py-3 font-medium">ที่อยู่</th>
+            <th class="px-4 py-3 font-medium">พิกัด</th>
+            <th class="px-4 py-3 text-right font-medium">จัดการ</th>
           </tr>
         </thead>
-        <tbody class="divide-y">
-          <tr *ngFor="let c of customers" class="hover:bg-slate-50">
-            <td class="p-3 font-medium">{{ c.name }}</td>
-            <td class="p-3">{{ c.phone }}</td>
-            <td class="p-3">{{ c.address || '-' }}</td>
-            <td class="p-3">
-              <button (click)="openMapModal(c)" class="text-blue-600 hover:underline flex items-center gap-1">
-                📍 {{ c.latitude }}, {{ c.longitude }}
+        <tbody class="divide-y divide-slate-200">
+          <tr *ngIf="loading() && customers().length === 0">
+            <td colspan="5" class="px-4 py-8 text-center text-slate-600" role="status">กำลังโหลดข้อมูลลูกค้า...</td>
+          </tr>
+          <tr *ngIf="!loading() && customers().length === 0">
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">ยังไม่มีข้อมูลลูกค้า</td>
+          </tr>
+          <tr *ngFor="let c of customers()">
+            <td class="px-4 py-3 font-medium text-slate-900">{{ c.name }}</td>
+            <td class="px-4 py-3">{{ c.phone }}</td>
+            <td class="px-4 py-3">{{ c.address || '-' }}</td>
+            <td class="px-4 py-3">
+              <button type="button" (click)="openMapModal(c)" class="min-h-11 text-left text-blue-700 underline hover:text-blue-900">
+                {{ c.latitude }}, {{ c.longitude }}
               </button>
             </td>
-            <td class="p-3 text-center space-x-2">
-              <button (click)="onEdit(c)" class="text-amber-600 hover:underline">แก้ไข</button>
-              <button (click)="onDelete(c.id)" class="text-rose-600 hover:underline">ลบ</button>
+            <td class="px-4 py-3">
+              <div class="flex justify-end gap-2">
+                <button type="button" (click)="onEdit(c)" class="min-h-11 border border-slate-300 px-3 hover:bg-slate-100">แก้ไข</button>
+                <button type="button" (click)="onDelete(c.id)" class="min-h-11 border border-red-600 px-3 text-red-700 hover:bg-red-50">ลบ</button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+  </section>
 
-  </div>
-
-  <div *ngIf="selectedCustomerForMap && mapUrl" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-4 w-full max-w-2xl space-y-3">
-      <div class="flex justify-between items-center">
-        <h3 class="font-bold text-sm">ตำแหน่งบ้าน: {{ selectedCustomerForMap.name }}</h3>
-        <button (click)="closeMapModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+  <div
+    *ngIf="selectedCustomerForMap && mapUrl"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="map-dialog-title">
+    <div class="w-full max-w-2xl border border-slate-300 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between gap-4">
+        <h2 id="map-dialog-title" class="font-semibold text-slate-900">ตำแหน่งบ้าน: {{ selectedCustomerForMap.name }}</h2>
+        <button type="button" (click)="closeMapModal()" class="min-h-11 border border-slate-300 px-4 hover:bg-slate-100">ปิด</button>
       </div>
-      <div class="w-full h-80 bg-slate-100 rounded-lg overflow-hidden border">
-        <iframe 
-          width="100%" 
-          height="100%" 
-          frameborder="0" 
-          scrolling="no" 
-          marginheight="0" 
-          marginwidth="0" 
-          [src]="mapUrl">
-        </iframe>
-      </div>
-      <div class="text-right">
-        <button (click)="closeMapModal()" class="px-3 py-1.5 bg-slate-200 text-xs rounded-md">ปิด</button>
+      <div class="h-80 w-full border border-slate-300 bg-slate-100">
+        <iframe class="h-full w-full" title="แผนที่ตำแหน่งลูกค้า" [src]="mapUrl"></iframe>
       </div>
     </div>
   </div>

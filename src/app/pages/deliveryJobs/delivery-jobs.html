@@ -1,95 +1,210 @@
-<div class="min-h-screen bg-slate-100 p-4 md:p-8 font-sans text-slate-800">
-  <div class="max-w-7xl mx-auto space-y-6">
+<div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+  <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">ใบงานจัดส่ง</h1>
+      <p class="mt-1 text-sm text-slate-600">ค้นหาใบงานและดูจุดจัดส่งของไรเดอร์แต่ละคน</p>
+    </div>
+    <p class="text-sm text-slate-600" role="status">
+      {{ loading() ? 'กำลังโหลดข้อมูลใบงาน...' : 'ทั้งหมด ' + jobs().length + ' ใบงาน' }}
+    </p>
+  </header>
 
-    <div class="bg-white p-6 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">🧾 ใบงานจัดส่ง (Delivery Jobs)</h1>
-        <p class="text-xs text-slate-500 mt-1">ดูใบงานทั้งหมดว่า Rider คนไหนได้ออเดอร์ไหน จำนวนกี่กล่อง ระยะทาง เวลา และเลขใบงาน</p>
+  <section class="border border-slate-300 bg-white p-4" aria-labelledby="search-heading">
+    <h2 id="search-heading" class="text-base font-semibold text-slate-900">ค้นหาใบงาน</h2>
+    <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div class="flex-1">
+        <label for="job-search" class="mb-1 block text-sm font-medium text-slate-700">เลขใบงาน ชื่อ หรือเบอร์โทรไรเดอร์</label>
+        <input
+          id="job-search"
+          type="search"
+          [(ngModel)]="search"
+          (keyup.enter)="onSearch()"
+          placeholder="ตัวอย่าง JOB001"
+          class="min-h-11 w-full border border-slate-400 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400"
+        />
       </div>
-      <span class="px-3 py-1 bg-slate-100 rounded-full text-xs font-semibold">ทั้งหมด {{ jobs.length }} ใบงาน</span>
+      <button
+        type="button"
+        (click)="onSearch()"
+        [disabled]="loading()"
+        class="min-h-11 bg-blue-700 px-5 py-2 font-medium text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ loading() ? 'กำลังโหลด...' : 'ค้นหา' }}
+      </button>
+      @if (search) {
+        <button
+          type="button"
+          (click)="search = ''; loadJobs()"
+          [disabled]="loading()"
+          class="min-h-11 border border-slate-400 bg-white px-5 py-2 font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          ล้างการค้นหา
+        </button>
+      }
     </div>
+  </section>
 
-    <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-2">
-      <input [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="ค้นหาเลขใบงาน เช่น JOB001 / ชื่อไรเดอร์ / เบอร์โทร"
-        class="flex-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm" />
-      <button (click)="onSearch()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold">ค้นหา</button>
-      <button *ngIf="search" (click)="search=''; loadJobs()" class="px-4 py-2.5 bg-slate-100 rounded-xl text-sm">ล้าง</button>
+  <section class="overflow-hidden border border-slate-300 bg-white" aria-labelledby="jobs-heading">
+    <div class="border-b border-slate-300 px-4 py-3">
+      <h2 id="jobs-heading" class="font-semibold text-slate-900">รายการใบงาน</h2>
     </div>
-
-    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 border-b uppercase text-slate-400">
+    <div class="overflow-x-auto">
+      <table class="min-w-full border-collapse text-left text-sm">
+        <thead class="bg-slate-100 text-slate-700">
+          <tr>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">เลขใบงาน</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">ไรเดอร์</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">วันที่ส่ง</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">ออเดอร์</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">กล่อง</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">ระยะทาง</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">เวลา</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">ค่าส่ง</th>
+            <th scope="col" class="border-b border-slate-300 px-4 py-3 font-semibold">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          @if (loading()) {
             <tr>
-              <th class="py-4 px-5">เลขใบงาน</th>
-              <th class="py-4 px-5">Rider</th>
-              <th class="py-4 px-5">วันที่ส่ง</th>
-              <th class="py-4 px-5 text-center">ออเดอร์</th>
-              <th class="py-4 px-5 text-center">กล่อง</th>
-              <th class="py-4 px-5 text-center">ระยะทาง</th>
-              <th class="py-4 px-5 text-center">เวลา</th>
-              <th class="py-4 px-5 text-center">ค่าส่ง</th>
-              <th class="py-4 px-5 text-center">ดูงาน</th>
+              <td colspan="9" class="px-4 py-8 text-center text-slate-600" role="status">กำลังโหลดข้อมูล...</td>
             </tr>
-          </thead>
-          <tbody class="divide-y">
-            <tr *ngIf="loading"><td colspan="9" class="py-8 text-center text-slate-400">กำลังโหลด...</td></tr>
-            <tr *ngIf="!loading && jobs.length === 0"><td colspan="9" class="py-8 text-center text-slate-400">ยังไม่มีใบงาน — ไปคำนวณที่หน้า Route Planning ก่อน</td></tr>
-            <tr *ngFor="let j of jobs" class="hover:bg-slate-50">
-              <td class="py-3 px-5">
-                <span class="font-mono font-bold px-2 py-1 rounded-md text-white text-[11px]" [style.background]="j.color">{{ j.job_code }}</span>
-              </td>
-              <td class="py-3 px-5">
-                <p class="font-semibold">{{ j.rider_name }}</p>
-                <p class="text-slate-400">{{ j.rider_phone }}</p>
-              </td>
-              <td class="py-3 px-5">{{ j.delivery_date }}</td>
-              <td class="py-3 px-5 text-center font-bold">{{ j.total_orders }}</td>
-              <td class="py-3 px-5 text-center">{{ j.total_boxes }} กล่อง</td>
-              <td class="py-3 px-5 text-center">{{ j.distance_km }} km</td>
-              <td class="py-3 px-5 text-center">{{ j.duration_minutes }} นาที</td>
-              <td class="py-3 px-5 text-center">฿{{ j.delivery_cost }}</td>
-              <td class="py-3 px-5 text-center">
-                <button (click)="openDetail(j.job_code)" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-bold">รายละเอียด</button>
-              </td>
+          } @else if (jobs().length === 0) {
+            <tr>
+              <td colspan="9" class="px-4 py-8 text-center text-slate-600">ยังไม่มีใบงาน กรุณาคำนวณเส้นทางก่อน</td>
             </tr>
-          </tbody>
-        </table>
-      </div>
+          } @else {
+            @for (job of jobs(); track job.route_id) {
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-block border-l-4 pl-2 font-mono font-semibold text-slate-900"
+                    [style.border-left-color]="job.color"
+                  >
+                    {{ job.job_code }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-slate-700">
+                  <p class="font-medium text-slate-900">{{ job.rider_name }}</p>
+                  <p class="mt-1 text-xs text-slate-600">{{ job.rider_phone }}</p>
+                </td>
+                <td class="px-4 py-3 text-slate-700">{{ job.delivery_date }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ job.total_orders }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ job.total_boxes }} กล่อง</td>
+                <td class="px-4 py-3 text-slate-700">{{ job.distance_km }} กม.</td>
+                <td class="px-4 py-3 text-slate-700">{{ job.duration_minutes }} นาที</td>
+                <td class="px-4 py-3 text-slate-700">{{ job.delivery_cost }} บาท</td>
+                <td class="px-4 py-3">
+                  <button
+                    type="button"
+                    (click)="openDetail(job.job_code)"
+                    [disabled]="detailLoading()"
+                    class="min-h-11 border border-blue-700 bg-white px-4 py-2 font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    ดูรายละเอียด
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
     </div>
-
-    <div *ngIf="selected" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="p-5 flex justify-between items-start" [style.borderTop]="'6px solid ' + selected.color">
-          <div>
-            <h3 class="font-bold">ใบงาน <span class="font-mono">{{ selected.job_code }}</span></h3>
-            <p class="text-xs text-slate-500">{{ selected.rider_name }} ({{ selected.rider_phone }}) • ส่ง {{ selected.delivery_date }}</p>
-            <p class="text-xs mt-1">{{ stopRouteText() }} พร้อมปุ่มเปิดแผนที่</p>
-          </div>
-          <button (click)="closeDetail()" class="text-slate-400 font-bold">✕</button>
-        </div>
-        <div class="px-5 grid grid-cols-4 gap-2 text-center text-xs pb-3">
-          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">กล่อง</p><p class="font-bold">{{ selected.total_boxes }}</p></div>
-          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">ระยะ</p><p class="font-bold">{{ selected.distance_km }} km</p></div>
-          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">เวลา</p><p class="font-bold">{{ selected.duration_minutes }} นาที</p></div>
-          <div class="bg-slate-50 rounded-lg p-2"><p class="text-slate-400">ค่าส่ง</p><p class="font-bold">฿{{ selected.delivery_cost }}</p></div>
-        </div>
-        <div class="px-5 pb-4 space-y-2">
-          <div *ngFor="let s of selected.stops" class="border rounded-xl p-3 text-xs flex justify-between">
-            <div>
-              <p class="font-bold">จุดที่ {{ s.stop_sequence }} → {{ s.customer_name }} ({{ s.quantity }} กล่อง)</p>
-              <p class="text-slate-500">{{ s.address }} • {{ s.phone }}</p>
-              <p class="text-slate-400">Order #{{ s.order_id }} • ห่างจากจุดก่อน {{ s.distance_from_previous_km }} km</p>
-            </div>
-            <div class="text-right"><p class="font-mono font-bold">{{ s.arrival_time }}</p><p class="text-slate-400">ถึงโดยประมาณ</p></div>
-          </div>
-        </div>
-        <div class="p-4 border-t flex gap-2">
-          <button (click)="openNav(selected.navigation_url)" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">🗺️ เปิดแผนที่นำทาง</button>
-          <button (click)="closeDetail()" class="px-5 py-2.5 bg-slate-100 rounded-xl text-xs">ปิด</button>
-        </div>
-      </div>
-    </div>
-
-  </div>
+  </section>
 </div>
+
+@if (selected(); as selectedJob) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="job-detail-title"
+  >
+    <div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto border border-slate-400 bg-white">
+      <header class="flex items-start justify-between gap-4 border-b border-slate-300 p-5">
+        <div class="border-l-4 pl-3" [style.border-left-color]="selectedJob.color">
+          <h2 id="job-detail-title" class="text-xl font-semibold text-slate-900">
+            ใบงาน {{ selectedJob.job_code }}
+          </h2>
+          <p class="mt-1 text-sm text-slate-600">
+            {{ selectedJob.rider_name }} · {{ selectedJob.rider_phone }} · วันที่ {{ selectedJob.delivery_date }}
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="closeDetail()"
+          aria-label="ปิดหน้าต่างรายละเอียด"
+          class="min-h-11 min-w-11 border border-slate-400 bg-white px-3 text-xl text-slate-700 hover:bg-slate-100"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="space-y-6 p-5">
+        <dl class="grid grid-cols-2 border border-slate-300 sm:grid-cols-4">
+          <div class="border-b border-r border-slate-300 p-3 sm:border-b-0">
+            <dt class="text-xs font-medium text-slate-500">จำนวนกล่อง</dt>
+            <dd class="mt-1 font-semibold text-slate-900">{{ selectedJob.total_boxes }} กล่อง</dd>
+          </div>
+          <div class="border-b border-slate-300 p-3 sm:border-b-0 sm:border-r">
+            <dt class="text-xs font-medium text-slate-500">ระยะทาง</dt>
+            <dd class="mt-1 font-semibold text-slate-900">{{ selectedJob.distance_km }} กม.</dd>
+          </div>
+          <div class="border-r border-slate-300 p-3">
+            <dt class="text-xs font-medium text-slate-500">เวลาประมาณ</dt>
+            <dd class="mt-1 font-semibold text-slate-900">{{ selectedJob.duration_minutes }} นาที</dd>
+          </div>
+          <div class="p-3">
+            <dt class="text-xs font-medium text-slate-500">ค่าส่ง</dt>
+            <dd class="mt-1 font-semibold text-slate-900">{{ selectedJob.delivery_cost }} บาท</dd>
+          </div>
+        </dl>
+
+        <section aria-labelledby="stops-heading">
+          <h3 id="stops-heading" class="font-semibold text-slate-900">ลำดับการจัดส่ง</h3>
+          <p class="mt-1 text-sm text-slate-600">{{ stopRouteText() }}</p>
+          <ol class="mt-3 space-y-3">
+            @for (stop of selectedJob.stops; track stop.order_id) {
+              <li class="border border-slate-300 p-4">
+                <div class="flex items-start gap-3">
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center bg-slate-800 text-sm font-semibold text-white">
+                    {{ stop.stop_sequence }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                      <p class="font-semibold text-slate-900">{{ stop.customer_name }}</p>
+                      <p class="text-sm font-medium text-slate-700">{{ stop.quantity }} กล่อง</p>
+                    </div>
+                    <p class="mt-2 text-sm text-slate-700">{{ stop.address }}</p>
+                    <p class="mt-1 text-sm text-slate-600">โทร {{ stop.phone }}</p>
+                    <div class="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-600">
+                      <span>ออเดอร์ #{{ stop.order_id }}</span>
+                      <span>ห่างจากจุดก่อนหน้า {{ stop.distance_from_previous_km }} กม.</span>
+                      <span>ถึงโดยประมาณ {{ stop.arrival_time }}</span>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+      </div>
+
+      <footer class="flex flex-col-reverse gap-3 border-t border-slate-300 p-5 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          (click)="closeDetail()"
+          class="min-h-11 border border-slate-400 bg-white px-5 py-2 font-medium text-slate-800 hover:bg-slate-100"
+        >
+          ปิด
+        </button>
+        <button
+          type="button"
+          (click)="openNav(selectedJob.navigation_url)"
+          class="min-h-11 bg-blue-700 px-5 py-2 font-medium text-white hover:bg-blue-800"
+        >
+          เปิดเส้นทางใน Google Maps
+        </button>
+      </footer>
+    </div>
+  </div>
+}

@@ -1,18 +1,19 @@
-<nav style="padding: 1rem; background-color: #f3f4f6; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-  <a routerLink="/customers" routerLinkActive="active" style="padding: 8px 16px; background-color: #2563eb; color: white; border-radius: 6px; text-decoration: none; font-weight: 500;">
-    จัดการลูกค้า
-  </a>
-  <a routerLink="/orders" routerLinkActive="active" style="padding: 8px 16px; background-color: #16a34a; color: white; border-radius: 6px; text-decoration: none; font-weight: 500;">
-    จัดการออเดอร์
-  </a>
-  <a routerLink="/route" routerLinkActive="active" style="padding: 8px 16px; background-color: #0f172a; color: white; border-radius: 6px; text-decoration: none; font-weight: 500;">
-    🗺️ วางแผนเส้นทาง
-  </a>
-  <a routerLink="/jobs" routerLinkActive="active" style="padding: 8px 16px; background-color: #7c3aed; color: white; border-radius: 6px; text-decoration: none; font-weight: 500;">
-    🧾 ใบงานจัดส่ง
-  </a>
-</nav>
+<header class="border-b border-slate-300 bg-white">
+  <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <div>
+      <p class="text-lg font-semibold text-slate-900">ระบบจัดส่งอาหาร</p>
+      <p class="text-sm text-slate-600">จัดการลูกค้า ออเดอร์ และงานจัดส่ง</p>
+    </div>
 
-<main style="padding: 1.5rem;">
+    <nav class="flex flex-wrap gap-2" aria-label="เมนูหลัก">
+      <a routerLink="/customers" routerLinkActive="active" class="nav-link">ลูกค้า</a>
+      <a routerLink="/orders" routerLinkActive="active" class="nav-link">ออเดอร์</a>
+      <a routerLink="/route" routerLinkActive="active" class="nav-link">วางแผนเส้นทาง</a>
+      <a routerLink="/jobs" routerLinkActive="active" class="nav-link">ใบงานจัดส่ง</a>
+    </nav>
+  </div>
+</header>
+
+<main class="min-h-screen bg-slate-50">
   <router-outlet></router-outlet>
 </main>

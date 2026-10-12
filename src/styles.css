@@ -1,4 +1,40 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #1e293b;
+  font-family: Arial, "Noto Sans Thai", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+button,
+a,
+input,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+button:not(:disabled),
+a[href] {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.3);
+  outline-offset: 2px;
+}
