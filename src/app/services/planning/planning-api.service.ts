@@ -11,27 +11,27 @@ export class PlanningApiService {
   private readonly http = inject(HttpClient);
 
   getShop(): Observable<ShopModel> {
-    return this.http.get<ShopModel>(`${API_BASE_URL}/route/shop`);
+    return this.http.get<ShopModel>(`${API_BASE_URL}/plans/shop`);
   }
 
   getRiders(): Observable<RiderModel[]> {
-    return this.http.get<RiderModel[]>(`${API_BASE_URL}/route/riders`);
+    return this.http.get<RiderModel[]>(`${API_BASE_URL}/plans/riders`);
   }
 
   getPendingOrders(date?: string): Observable<unknown[]> {
     const query = date ? `?date=${encodeURIComponent(date)}` : '';
-    return this.http.get<unknown[]>(`${API_BASE_URL}/route/pending${query}`);
+    return this.http.get<unknown[]>(`${API_BASE_URL}/plans/pending${query}`);
   }
 
-  calculateRoute(data: { delivery_date: string; rider_count: number }): Observable<PlanResultModel> {
-    return this.http.post<PlanResultModel>(`${API_BASE_URL}/route/calculate`, data);
+  calculatePlans(data: { delivery_date: string; rider_count: number }): Observable<PlanResultModel> {
+    return this.http.post<PlanResultModel>(`${API_BASE_URL}/plans/calculate`, data);
   }
 
   getPlans(): Observable<unknown[]> {
-    return this.http.get<unknown[]>(`${API_BASE_URL}/route/plans`);
+    return this.http.get<unknown[]>(`${API_BASE_URL}/plans/`);
   }
 
   getPlanById(id: number): Observable<PlanResultModel> {
-    return this.http.get<PlanResultModel>(`${API_BASE_URL}/route/plans/${id}`);
+    return this.http.get<PlanResultModel>(`${API_BASE_URL}/plans${id}`);
   }
 }

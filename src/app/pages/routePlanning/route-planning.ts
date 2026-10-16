@@ -121,7 +121,7 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.calculating.set(true);
-    this.planningApi.calculateRoute({ delivery_date: this.deliveryDate, rider_count: Number(this.riderCount) }).subscribe({
+    this.planningApi.calculatePlans({ delivery_date: this.deliveryDate, rider_count: Number(this.riderCount) }).subscribe({
       next: (res) => {
         this.plan.set(res);
         this.calculating.set(false);
