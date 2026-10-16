@@ -32,6 +32,6 @@ export class PlanningApiService {
   }
 
   getPlanById(id: number): Observable<PlanResultModel> {
-    return this.http.get<PlanResultModel>(`${API_BASE_URL}/plans${id}`);
+    return this.http.get<PlanResultModel>(`${API_BASE_URL}/plans/${id}`);
   }
 }
