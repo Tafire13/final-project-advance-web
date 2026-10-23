@@ -105,7 +105,7 @@ export class CustomerManagement implements OnInit {
         });
     }
 
-    openMapModal(cust: CustomerModel): void {
+        openMapModal(cust: CustomerModel): void {
         this.selectedCustomerForMap = cust;
         const rawUrl = `https://maps.google.com/maps?q=${cust.latitude},${cust.longitude}&hl=th&z=15&output=embed`;
         this.mapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl);

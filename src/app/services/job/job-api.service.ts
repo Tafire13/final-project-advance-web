@@ -11,13 +11,13 @@ export class JobApiService {
   private readonly http = inject(HttpClient);
 
   getJobs(search = ''): Observable<DeliveryJobModel[]> {
-    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+    const query = search ? `?search=${search}` : '';
     return this.http.get<DeliveryJobModel[]>(`${API_BASE_URL}/jobs${query}`);
   }
 
   getJobByCode(code: string): Observable<DeliveryJobDetailModel> {
     return this.http.get<DeliveryJobDetailModel>(
-      `${API_BASE_URL}/jobs/${encodeURIComponent(code)}`
+      `${API_BASE_URL}/jobs/${(code)}`
     );
   }
 }
