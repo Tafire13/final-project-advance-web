@@ -1,136 +1,103 @@
 <div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
   <header>
     <h1 class="text-2xl font-semibold text-slate-900">วางแผนเส้นทาง</h1>
-    <p class="text-sm text-slate-600">เลือกวันที่และจำนวนไรเดอร์ แล้วให้ระบบแบ่งงานและคำนวณเส้นทาง</p>
+    <p class="text-sm text-slate-600">เลือกวันที่และจำนวนไรเดอร์ แล้วคำนวณเส้นทางจากออเดอร์ที่รอจัดส่ง</p>
   </header>
 
-  <section class="border border-slate-300 bg-white p-4 sm:p-5" aria-labelledby="route-form-title">
-    <h2 id="route-form-title" class="mb-4 text-lg font-semibold text-slate-900">ข้อมูลสำหรับคำนวณ</h2>
-
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-start">
-      <div>
-        <label for="delivery-date" class="mb-1 block text-sm font-medium text-slate-700">วันที่จัดส่ง</label>
-        <input id="delivery-date" type="date" [(ngModel)]="deliveryDate" (change)="refreshPending()" class="min-h-11 w-full border border-slate-300 px-3" />
-        <p class="mt-1 text-sm" [ngClass]="pendingCount() === 0 ? 'text-red-700' : 'text-slate-600'">
-          <span *ngIf="loading()">กำลังตรวจสอบออเดอร์...</span>
-          <span *ngIf="!loading() && pendingCount() !== null">ออเดอร์รอนำส่ง {{ pendingCount() }} รายการ</span>
-        </p>
-      </div>
-
-      <div>
-        <label for="rider-count" class="mb-1 block text-sm font-medium text-slate-700">จำนวนไรเดอร์ที่จะใช้</label>
+  <section class="border border-slate-300 bg-white p-4" aria-labelledby="calculate-title">
+    <h2 id="calculate-title" class="mb-3 font-semibold text-slate-900">ข้อมูลสำหรับคำนวณ</h2>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
+      <label class="block text-sm text-slate-700">
+        วันที่จัดส่ง
         <input
-          id="rider-count"
-          type="number"
-          [min]="minimumRiders()"
-          [max]="maximumRiders() || 10"
-          [(ngModel)]="riderCount"
-          (ngModelChange)="errorMsg.set('')"
-          [disabled]="loading() || ridersLoading() || pendingCount() === 0"
-          [attr.aria-invalid]="riderCountValidationMessage() ? 'true' : null"
-          aria-describedby="rider-help rider-error"
-          class="min-h-11 w-full border border-slate-300 px-3 disabled:bg-slate-100"
+          type="date"
+          class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+          [value]="deliveryDate()"
+          (input)="deliveryDate.set($any($event.target).value)"
         />
-        <p id="rider-help" class="mt-1 text-sm text-slate-600">
-          <span *ngIf="ridersLoading()">กำลังโหลดข้อมูลไรเดอร์...</span>
-          <span *ngIf="!ridersLoading() && pendingCount()">
-            ออเดอร์ {{ pendingCount() }} รายการ ต้องใช้ขั้นต่ำ {{ minimumRiders() }} คน
-            (สูงสุด 3 จุดต่อคน) และมีไรเดอร์ในระบบ {{ riders().length }} คน
-          </span>
-          <span *ngIf="!ridersLoading() && pendingCount() === 0">ไม่มีออเดอร์รอจัดส่งในวันที่เลือก</span>
-        </p>
-        <p id="rider-error" *ngIf="riderCountValidationMessage()" class="mt-1 text-sm text-red-700" role="alert">
-          {{ riderCountValidationMessage() }}
-        </p>
-      </div>
+      </label>
 
-      <div>
-        <button
-          type="button"
-          (click)="onCalculate()"
-          [disabled]="!canCalculate()"
-          class="min-h-11 w-full bg-blue-600 px-4 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-          {{ calculating() ? 'กำลังคำนวณ...' : 'คำนวณและแบ่งงาน' }}
-        </button>
-        <p *ngIf="errorMsg()" class="mt-2 text-sm text-red-700" role="alert">{{ errorMsg() }}</p>
-      </div>
+      <label class="block text-sm text-slate-700">
+        จำนวนไรเดอร์
+        <input
+          type="number"
+          min="1"
+          max="10"
+          class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+          [value]="riderCount()"
+          (input)="riderCount.set(+$any($event.target).value)"
+        />
+      </label>
+
+      <button
+        type="button"
+        class="min-h-11 bg-blue-600 px-4 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="mapLoading() || calculating() || !deliveryDate() || riderCount() < 1 || riderCount() > 10"
+        (click)="onCalculate()"
+      >
+        {{ calculating() ? 'กำลังคำนวณ...' : 'คำนวณเส้นทาง' }}
+      </button>
     </div>
+    <p *ngIf="calculateError()" class="mt-3 text-sm text-red-700" role="alert">
+      {{ calculateError() }}
+    </p>
   </section>
 
   <section class="border border-slate-300 bg-white" aria-labelledby="route-map-title">
     <div class="border-b border-slate-300 px-4 py-3">
-      <h2 id="route-map-title" class="font-semibold text-slate-900">
-        แผนที่เส้นทาง
-        <span *ngIf="plan() as currentPlan">วันที่ {{ currentPlan.delivery_date }}</span>
-      </h2>
-      <p *ngIf="!plan()" class="text-sm text-slate-600">
-        ขณะนี้แสดงตำแหน่งร้าน จุดส่งและเส้นทางจะแสดงหลังจากกดคำนวณและแบ่งงาน
-      </p>
-      <p *ngIf="plan()" class="text-sm text-slate-600">
-        เส้นแต่ละสีแทนเส้นทางของไรเดอร์แต่ละคน
-      </p>
+      <h2 id="route-map-title" class="font-semibold text-slate-900">แผนที่</h2>
+      <p class="text-sm text-slate-600">จุดส่งและเส้นทางจะแสดงหลังคำนวณ</p>
       <p *ngIf="mapLoading()" class="mt-1 text-sm text-slate-600" role="status">กำลังโหลดแผนที่...</p>
       <p *ngIf="mapError()" class="mt-1 text-sm text-red-700" role="alert">{{ mapError() }}</p>
     </div>
-    <div id="route-map" class="h-[480px] w-full bg-slate-100" aria-label="แผนที่ตำแหน่งร้านและเส้นทางจัดส่ง"></div>
+    <div id="route-map" class="h-[480px] w-full bg-slate-100" aria-label="แผนที่ตำแหน่งร้าน"></div>
   </section>
 
-  <div *ngIf="plan() as currentPlan" class="space-y-6">
-    <section class="border border-slate-300 bg-white" aria-labelledby="plan-summary-title">
-      <div class="border-b border-slate-300 px-4 py-3">
-        <h2 id="plan-summary-title" class="font-semibold text-slate-900">สรุปแผน #{{ currentPlan.plan_id }}</h2>
-      </div>
-      <dl class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
-        <div class="border-b border-r border-slate-200 p-3"><dt class="text-sm text-slate-600">ออเดอร์</dt><dd class="mt-1 font-semibold">{{ currentPlan.total_orders }}</dd></div>
-        <div class="border-b border-r border-slate-200 p-3"><dt class="text-sm text-slate-600">กล่อง</dt><dd class="mt-1 font-semibold">{{ currentPlan.total_boxes }}</dd></div>
-        <div class="border-b border-r border-slate-200 p-3"><dt class="text-sm text-slate-600">ไรเดอร์</dt><dd class="mt-1 font-semibold">{{ currentPlan.rider_count }}</dd></div>
-        <div class="border-b border-r border-slate-200 p-3"><dt class="text-sm text-slate-600">ระยะรวม</dt><dd class="mt-1 font-semibold">{{ currentPlan.distance_km }} km</dd></div>
-        <div class="border-b border-r border-slate-200 p-3"><dt class="text-sm text-slate-600">รายได้</dt><dd class="mt-1 font-semibold">฿{{ currentPlan.revenue }}</dd></div>
-        <div class="border-b border-r border-slate-200 p-3"><dt class="text-sm text-slate-600">ค่าส่ง</dt><dd class="mt-1 font-semibold">฿{{ currentPlan.delivery_cost }}</dd></div>
-        <div class="border-b border-r border-slate-200 p-3"><dt class="text-sm text-slate-600">กำไร</dt><dd class="mt-1 font-semibold">฿{{ currentPlan.profit }}</dd></div>
-        <div class="border-b border-slate-200 p-3">
-          <dt class="text-sm text-slate-600">ถึงช้าสุด</dt>
-          <dd class="mt-1 font-semibold">{{ currentPlan.last_arrival_time }}</dd>
-          <dd class="text-sm" [ngClass]="currentPlan.all_on_time ? 'text-green-700' : 'text-red-700'">{{ currentPlan.all_on_time ? 'ทันเวลา' : 'เกินเวลา' }}</dd>
-        </div>
-      </dl>
-    </section>
+  <section *ngIf="plan() as currentPlan" class="space-y-4" aria-labelledby="plan-result-title">
+    <div class="border border-slate-300 bg-white p-4">
+      <h2 id="plan-result-title" class="font-semibold text-slate-900">
+        ผลแผนจัดส่ง #{{ currentPlan.plan_id }}
+      </h2>
+      <p class="mt-1 text-sm text-slate-600">
+        วันที่ {{ currentPlan.delivery_date }} · {{ currentPlan.total_orders }} ออเดอร์ · {{ currentPlan.total_boxes }} กล่อง
+      </p>
+      <p class="mt-1 text-sm text-slate-600">
+        ระยะทางรวม {{ currentPlan.distance_km }} กม. · ค่าส่ง {{ currentPlan.delivery_cost }} บาท
+      </p>
+      <p class="mt-1 text-sm text-slate-600">
+        รายรับ {{ currentPlan.revenue }} บาท · ต้นทุนอาหาร {{ currentPlan.food_cost }} บาท · กำไร {{ currentPlan.profit }} บาท
+      </p>
+      <p class="mt-1 text-sm" [ngClass]="currentPlan.all_on_time ? 'text-green-700' : 'text-red-700'">
+        เวลาขับรถโดยประมาณถึง {{ currentPlan.last_arrival_time }} —
+        {{ currentPlan.all_on_time ? 'ทันภายใน 12:30 น.' : 'เกินเวลา 12:30 น.' }}
+      </p>
+      <p class="mt-1 text-xs text-slate-500">เวลาเป็นค่าประมาณจาก OSRM ไม่รวมเวลาส่งมอบอาหารและการจราจรสด</p>
+    </div>
 
-    <section aria-labelledby="rider-routes-title">
-      <h2 id="rider-routes-title" class="mb-3 text-lg font-semibold text-slate-900">งานของไรเดอร์</h2>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <article *ngFor="let r of currentPlan.routes" class="border border-slate-300 bg-white" [style.borderTop]="'5px solid ' + r.color">
-          <header class="border-b border-slate-200 p-4">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h3 class="font-semibold text-slate-900">ไรเดอร์ {{ r.rider_number }}: {{ r.rider_name }}</h3>
-                <p class="text-sm text-slate-600">{{ r.rider_phone }}</p>
-                <p class="mt-1 font-mono text-sm text-slate-700">{{ r.job_code }}</p>
-              </div>
-              <span class="border border-slate-300 px-2 py-1 text-sm">{{ r.total_boxes }} กล่อง</span>
-            </div>
-          </header>
-
-          <dl class="grid grid-cols-3 border-b border-slate-200 text-sm">
-            <div class="border-r border-slate-200 p-3"><dt class="text-slate-600">ระยะ</dt><dd class="font-medium">{{ r.distance_km }} km</dd></div>
-            <div class="border-r border-slate-200 p-3"><dt class="text-slate-600">เวลา</dt><dd class="font-medium">{{ r.duration_minutes }} นาที</dd></div>
-            <div class="p-3"><dt class="text-slate-600">ค่าส่ง</dt><dd class="font-medium">฿{{ r.delivery_cost }}</dd></div>
-          </dl>
-
-          <ol class="divide-y divide-slate-200">
-            <li *ngFor="let s of r.stops" class="flex justify-between gap-3 p-3 text-sm">
-              <span>จุดที่ {{ s.stop_sequence }} — {{ s.customer_name }} ({{ s.quantity }} กล่อง)</span>
-              <span class="shrink-0 font-mono text-slate-600">{{ s.arrival_time }}</span>
-            </li>
-          </ol>
-
-          <div class="p-3">
-            <button type="button" (click)="openNav(r.navigation_url)" class="min-h-11 w-full border border-blue-600 px-4 font-medium text-blue-700 hover:bg-blue-50">
-              เปิด Google Maps
-            </button>
-          </div>
-        </article>
-      </div>
-    </section>
-  </div>
+    <article
+      *ngFor="let route of currentPlan.routes; let index = index"
+      class="border border-slate-300 bg-white p-4"
+      [style.border-left]="'5px solid ' + (route.color || '#64748b')"
+    >
+      <h3 class="font-semibold text-slate-900">
+        ไรเดอร์ {{ route.rider.name }}
+        <span *ngIf="route.job_code" class="ml-2 font-mono text-sm">{{ route.job_code }}</span>
+      </h3>
+      <p class="mt-1 text-sm text-slate-600">
+        {{ route.total_boxes }} กล่อง · {{ route.stops.length }} จุด · {{ route.distance_km }} กม. · {{ route.travel_minutes }} นาที
+      </p>
+      <ol class="mt-3 list-inside list-decimal space-y-1 text-sm text-slate-800">
+        <li *ngFor="let stop of route.stops">
+          {{ stop.customer_name }} — {{ stop.quantity }} กล่อง
+        </li>
+      </ol>
+      <a
+        *ngIf="route.job_code"
+        class="mt-3 inline-block text-sm text-blue-700 underline"
+        [routerLink]="['/rider', route.job_code]"
+      >
+        เปิดใบงานไรเดอร์
+      </a>
+    </article>
+  </section>
 </div>

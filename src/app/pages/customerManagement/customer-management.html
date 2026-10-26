@@ -64,6 +64,14 @@
     </div>
   </section>
 
+  <input
+  name="searchText"
+  [ngModel]="searchText()"
+  (ngModelChange)="searchText.set($event); searchCustomerByName()"
+  placeholder="พิมพ์ชื่อหรือนามสกุล"
+  class="min-h-11 w-full border border-slate-300 px-3"
+  />
+
   <section class="border border-slate-300 bg-white" aria-labelledby="customer-list-title">
     <div class="border-b border-slate-300 px-4 py-3">
       <h2 id="customer-list-title" class="font-semibold text-slate-900">รายชื่อลูกค้า</h2>

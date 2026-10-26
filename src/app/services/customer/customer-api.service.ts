@@ -29,4 +29,8 @@ export class CustomerApiService {
   deleteCustomerByID(id: string): Observable<unknown> {
     return this.http.delete(`${API_BASE_URL}/customer/${id}`);
   }
+
+  searchCustomerByName(name: string): Observable<CustomerModel[]> {
+    return this.http.get<CustomerModel[]>(`${API_BASE_URL}/customer/search/fields?name=${name}`);
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -12,10 +12,14 @@ import type { CustomerModel } from '../../models/customer/customer.model';
     templateUrl: './customer-management.html'
 })
 export class CustomerManagement implements OnInit {
+    private customerApi = inject(CustomerApiService);
+    private sanitizer = inject(DomSanitizer);
+
     readonly customers = signal<CustomerModel[]>([]);
     readonly loading = signal(false);
     selectedCustomerForMap: CustomerModel | null = null;
     mapUrl: SafeResourceUrl | null = null;
+    searchText = signal('');
 
     isEdit = false;
     currentId: number | string = '';
@@ -28,13 +32,30 @@ export class CustomerManagement implements OnInit {
         longitude: '103.2519'
     };
 
-    constructor(
-        private customerApi: CustomerApiService,
-        private sanitizer: DomSanitizer
-    ) { }
 
     ngOnInit(): void {
         this.loadCustomers();
+    }
+
+    searchCustomerByName() {
+        const keyword = this.searchText().trim();
+
+        if (!keyword) {
+            this.loadCustomers();
+            return;
+        }
+
+        this.loading.set(true);
+        this.customerApi.searchCustomerByName(keyword).subscribe({
+            next: (data) => {
+                this.customers.set(data || []);
+                this.loading.set(false);
+            },
+            error: (err) => {
+                console.error('Failed to search customers', err);
+                this.loading.set(false);
+            }
+        });
     }
 
     loadCustomers(): void {
