@@ -28,6 +28,7 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
   readonly planLoadError = signal('');
   readonly calculating = signal(false);
   readonly calculateError = signal('');
+  readonly copyFeedback = signal<{ jobCode: string; success: boolean } | null>(null);
 
   private map: L.Map | null = null;
   private routeLines = new Map<number, L.Polyline>();
@@ -191,6 +192,42 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
 
   focusRouteByIndex(routeIndex: number): void {
     this.focusRoute(routeIndex);
+  }
+
+  async copyJobCode(jobCode: string): Promise<void> {
+    let success = false;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(jobCode);
+        success = true;
+      }
+    } catch {
+      // Fall back when browser clipboard access is blocked.
+    }
+
+    if (!success) {
+      try {
+        success = this.copyTextFallback(jobCode);
+      } catch {
+        success = false;
+      }
+    }
+
+    this.copyFeedback.set({ jobCode, success });
+  }
+
+  private copyTextFallback(text: string): boolean {
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    const copied = document.execCommand('copy');
+    input.remove();
+    return copied;
   }
 
   private focusRoute(routeIndex: number): void {

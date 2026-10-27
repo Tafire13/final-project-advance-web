@@ -6,6 +6,7 @@ import { inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import * as L from 'leaflet';
 import type { DeliveryJobDetailModel } from '../../models/job/job.model';
+import type { RouteStopModel } from '../../models/planning/planning.model';
 import { JobApiService } from '../../services/job/job-api.service';
 
 @Component({
@@ -23,6 +24,8 @@ export class RiderJobSearch implements OnInit, OnDestroy {
   readonly loading = signal(false);
   readonly error = signal('');
   readonly job = signal<DeliveryJobDetailModel | null>(null);
+  readonly completingOrderId = signal<number | null>(null);
+  readonly stopActionError = signal<{ orderId: number; message: string } | null>(null);
   private map: L.Map | null = null;
 
   ngOnInit(): void {
@@ -86,6 +89,35 @@ export class RiderJobSearch implements OnInit, OnDestroy {
       }
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async markOrderDelivered(stop: RouteStopModel): Promise<void> {
+    if (stop.status !== 'pending' || this.completingOrderId() !== null) return;
+
+    this.completingOrderId.set(stop.order_id);
+    this.stopActionError.set(null);
+
+    try {
+      await lastValueFrom(this.jobApi.completeStop(this.code, stop.order_id));
+      this.job.update((currentJob) => {
+        if (!currentJob) return currentJob;
+        return {
+          ...currentJob,
+          stops: currentJob.stops.map((currentStop) =>
+            currentStop.order_id === stop.order_id
+              ? { ...currentStop, status: 'delivered' }
+              : currentStop
+          )
+        };
+      });
+    } catch (error: any) {
+      this.stopActionError.set({
+        orderId: stop.order_id,
+        message: error?.error?.error || 'บันทึกสถานะไม่สำเร็จ กรุณาลองอีกครั้ง'
+      });
+    } finally {
+      this.completingOrderId.set(null);
     }
   }
 

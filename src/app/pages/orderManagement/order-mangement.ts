@@ -28,6 +28,7 @@ export class OrderManagement implements OnInit {
   readonly actionMessage = signal('');
   readonly actionLoading = signal(false);
 
+  orderFormOpen = false;
   isEditMode = false;
   editingOrderId: number | null = null;
   selectedCustomerId: string | number = '';
@@ -42,6 +43,19 @@ export class OrderManagement implements OnInit {
   reloadAllData(): void {
     this.loadOrders();
     this.loadCustomers();
+  }
+
+  openOrderModal(): void {
+    if (this.customersLoading()) return;
+    this.resetForm();
+    this.actionError.set('');
+    this.actionMessage.set('');
+    this.orderFormOpen = true;
+  }
+
+  closeOrderModal(): void {
+    if (this.actionLoading()) return;
+    this.resetForm();
   }
 
   async loadOrders(): Promise<void> {
@@ -128,12 +142,14 @@ export class OrderManagement implements OnInit {
     this.editingOrderId = Number(order.id);
     this.selectedCustomerId = Number(order.customer_id);
     this.quantity = Number(order.quantity) || 1;
+    this.actionError.set('');
+    this.actionMessage.set('');
 
     if (order.order_date) {
       this.orderDate = new Date(order.order_date).toISOString().split('T')[0];
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.orderFormOpen = true;
   }
 
   async onRandom(): Promise<void> {
@@ -199,6 +215,7 @@ export class OrderManagement implements OnInit {
   }
 
   resetForm(): void {
+    this.orderFormOpen = false;
     this.isEditMode = false;
     this.editingOrderId = null;
     this.selectedCustomerId = '';

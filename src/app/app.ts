@@ -21,4 +21,13 @@ export class AppComponent {
     { initialValue: this.router.url }
   );
   readonly isRiderPage = computed(() => /^\/rider(?:[/?#]|$)/.test(this.currentUrl()));
+  readonly currentPageTitle = computed(() => {
+    const url = this.currentUrl();
+
+    if (url.startsWith('/customers')) return 'ลูกค้า';
+    if (url.startsWith('/orders')) return 'ออเดอร์';
+    if (url.startsWith('/plans')) return 'วางแผนเส้นทาง';
+    if (url.startsWith('/jobs')) return 'ใบงานจัดส่ง';
+    return 'ระบบจัดส่ง';
+  });
 }

@@ -7,8 +7,8 @@ html {
 
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #1e293b;
+  background: #fafafa;
+  color: #18181b;
   font-family: Arial, "Noto Sans Thai", sans-serif;
   font-size: 16px;
   line-height: 1.5;
@@ -35,6 +35,6 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.3);
+  outline: 3px solid rgb(225 29 72 / 30%);
   outline-offset: 2px;
 }

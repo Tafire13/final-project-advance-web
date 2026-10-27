@@ -1,14 +1,18 @@
-<main class="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:px-6 lg:py-7">
+<main class="mx-auto max-w-[1800px] space-y-5 px-3 py-5 sm:px-5 xl:px-8 lg:py-7">
   <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
     <div>
-      <p class="text-sm font-medium text-blue-700">ข้อมูลร้าน</p>
+      <p class="text-sm font-medium text-pink-700">ข้อมูลร้าน</p>
       <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">จัดการลูกค้า</h1>
       <p class="mt-1 text-sm leading-6 text-slate-600">เพิ่ม แก้ไข และตรวจตำแหน่งจัดส่งของลูกค้า</p>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap items-center gap-2">
       <span class="rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200" role="status">
         {{ loading() ? 'กำลังโหลด...' : customers().length + ' ราย' }}
       </span>
+      <button type="button" (click)="openCreateModal()"
+        class="min-h-11 rounded-lg bg-pink-700 px-4 text-sm font-semibold text-white hover:bg-pink-800">
+        เพิ่มลูกค้า
+      </button>
       <button type="button" (click)="loadCustomers()" [disabled]="loading()"
         class="min-h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
         {{ loading() ? 'กำลังโหลด' : 'โหลดใหม่' }}
@@ -16,21 +20,22 @@
     </div>
   </header>
 
-  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="customer-form-title">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 id="customer-form-title" class="text-lg font-semibold text-slate-900">
-          {{ isEdit ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่' }}
-        </h2>
-        <p class="mt-1 text-sm text-slate-600">ระบุพิกัดบ้านเพื่อให้ระบบวางแผนจุดส่งได้</p>
+  <div *ngIf="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="customer-form-title" (keydown.escape)="closeFormModal()">
+    <section class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:p-6">
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 id="customer-form-title" class="text-lg font-semibold text-slate-900">
+            {{ isEdit ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่' }}
+          </h2>
+          <p class="mt-1 text-sm text-slate-600">ระบุพิกัดบ้านเพื่อให้ระบบวางแผนจุดส่งได้</p>
+        </div>
+        <button type="button" (click)="closeFormModal()" [disabled]="saving()"
+          class="min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+          ปิด
+        </button>
       </div>
-      <button *ngIf="isEdit" type="button" (click)="resetForm()"
-        class="min-h-11 rounded-lg border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50">
-        ยกเลิกแก้ไข
-      </button>
-    </div>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <label for="customer-name" class="mb-1.5 block text-sm font-medium text-slate-700">ชื่อ-นามสกุล <span class="text-red-700">*</span></label>
         <input id="customer-name" name="customerName" [(ngModel)]="form.name" autocomplete="name" required
@@ -56,16 +61,18 @@
         <input id="customer-longitude" name="customerLongitude" type="number" step="any" [(ngModel)]="form.longitude" inputmode="decimal"
           class="min-h-11 w-full rounded-lg border border-slate-300 px-3 text-base text-slate-900" />
       </div>
-      <div class="flex items-end">
+      </div>
+      <p *ngIf="formError()" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">{{ formError() }}</p>
+      <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" (click)="closeFormModal()" [disabled]="saving()"
+          class="min-h-11 rounded-lg border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">ยกเลิก</button>
         <button type="button" (click)="onSubmit()" [disabled]="saving()"
-          class="min-h-11 w-full rounded-lg bg-blue-700 px-4 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50">
+          class="min-h-11 rounded-lg bg-pink-700 px-5 font-semibold text-white hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-50">
           {{ saving() ? 'กำลังบันทึก...' : (isEdit ? 'บันทึกการแก้ไข' : 'เพิ่มลูกค้า') }}
         </button>
       </div>
-    </div>
-    <p *ngIf="formError()" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">{{ formError() }}</p>
-    <p *ngIf="formMessage()" class="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800" role="status">{{ formMessage() }}</p>
-  </section>
+    </section>
+  </div>
 
   <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" aria-labelledby="customer-list-title">
     <div class="space-y-3 border-b border-slate-200 p-4 sm:flex sm:items-end sm:justify-between sm:space-y-0 sm:px-5">
@@ -86,7 +93,7 @@
     <div *ngIf="loading()" class="px-4 py-5 text-sm text-slate-600" role="status" aria-live="polite">กำลังโหลดรายชื่อลูกค้า...</div>
     <div *ngIf="!loading() && customers().length === 0 && !listError()" class="px-4 py-10 text-center">
       <p class="font-medium text-slate-800">ไม่พบรายชื่อลูกค้า</p>
-      <p class="mt-1 text-sm text-slate-600">ลองเปลี่ยนคำค้นหา หรือเพิ่มลูกค้าใหม่จากแบบฟอร์มด้านบน</p>
+      <p class="mt-1 text-sm text-slate-600">ลองเปลี่ยนคำค้นหา หรือกด “เพิ่มลูกค้า” เพื่อเพิ่มรายชื่อใหม่</p>
     </div>
 
     <ul *ngIf="customers().length > 0" class="divide-y divide-slate-200 md:hidden" aria-label="รายชื่อลูกค้า">
@@ -94,7 +101,7 @@
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <h3 class="font-semibold text-slate-900">{{ c.name }}</h3>
-            <a [href]="'tel:' + c.phone" class="mt-1 inline-flex min-h-8 items-center text-sm text-blue-800 underline">{{ c.phone }}</a>
+            <a [href]="'tel:' + c.phone" class="mt-1 inline-flex min-h-8 items-center text-sm text-pink-800 underline">{{ c.phone }}</a>
           </div>
           <button type="button" (click)="openMapModal(c)" class="min-h-10 shrink-0 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
             ดูแผนที่
@@ -123,10 +130,10 @@
         <tbody class="divide-y divide-slate-100">
           <tr *ngFor="let c of customers()" class="hover:bg-slate-50">
             <td class="px-5 py-3.5 font-medium text-slate-900">{{ c.name }}</td>
-            <td class="px-5 py-3.5"><a [href]="'tel:' + c.phone" class="text-blue-800 underline">{{ c.phone }}</a></td>
+            <td class="px-5 py-3.5"><a [href]="'tel:' + c.phone" class="text-pink-800 underline">{{ c.phone }}</a></td>
             <td class="max-w-xs px-5 py-3.5 text-slate-700">{{ c.address || '-' }}</td>
             <td class="px-5 py-3.5">
-              <button type="button" (click)="openMapModal(c)" class="min-h-10 rounded-lg px-2 text-left font-mono text-xs text-blue-800 underline hover:bg-blue-50">
+              <button type="button" (click)="openMapModal(c)" class="min-h-10 rounded-lg px-2 text-left font-mono text-xs text-pink-800 underline hover:bg-pink-50">
                 {{ c.latitude }}, {{ c.longitude }}
               </button>
             </td>

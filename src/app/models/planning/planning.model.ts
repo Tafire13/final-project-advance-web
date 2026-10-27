@@ -59,6 +59,7 @@ export interface PlanResultModel {
 // ใช้แสดงจุดส่งในใบงานไรเดอร์
 export interface RouteStopModel {
   order_id: number;
+  status: 'pending' | 'delivered' | 'cancelled';
   stop_sequence: number;
   customer_name: string;
   phone: string;

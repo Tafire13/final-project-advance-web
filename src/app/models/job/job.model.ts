@@ -26,3 +26,9 @@ export interface DeliveryJobDetailModel extends DeliveryJobModel {
   geometry: number[][] | string;
   stops: RouteStopModel[];
 }
+
+export interface CompleteStopResponse {
+  message: string;
+  order_id: number;
+  status: 'delivered';
+}

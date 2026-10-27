@@ -21,12 +21,12 @@ export class CustomerManagement implements OnInit {
   readonly listError = signal('');
   readonly listMessage = signal('');
   readonly formError = signal('');
-  readonly formMessage = signal('');
   readonly saving = signal(false);
 
   searchText = signal('');
   selectedCustomerForMap: CustomerModel | null = null;
   mapUrl: SafeResourceUrl | null = null;
+  showFormModal = false;
   isEdit = false;
   currentId: number | string = '';
 
@@ -83,11 +83,17 @@ export class CustomerManagement implements OnInit {
     }
   }
 
+  openCreateModal(): void {
+    this.resetForm();
+    this.listMessage.set('');
+    this.showFormModal = true;
+  }
+
   onEdit(customer: CustomerModel): void {
     this.isEdit = true;
     this.currentId = customer.id;
     this.formError.set('');
-    this.formMessage.set('');
+    this.listMessage.set('');
 
     this.form = {
       name: customer.name,
@@ -96,11 +102,12 @@ export class CustomerManagement implements OnInit {
       latitude: customer.latitude,
       longitude: customer.longitude
     };
+    this.showFormModal = true;
   }
 
   async onSubmit(): Promise<void> {
     this.formError.set('');
-    this.formMessage.set('');
+    this.listMessage.set('');
 
     if (!this.form.name.trim() || !this.form.phone.trim()) {
       this.formError.set('กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบ');
@@ -120,7 +127,7 @@ export class CustomerManagement implements OnInit {
       }
 
       this.resetForm();
-      this.formMessage.set(wasEdit ? 'บันทึกการแก้ไขลูกค้าแล้ว' : 'เพิ่มลูกค้าเรียบร้อยแล้ว');
+      this.listMessage.set(wasEdit ? 'บันทึกการแก้ไขลูกค้าแล้ว' : 'เพิ่มลูกค้าเรียบร้อยแล้ว');
       await this.loadCustomers();
     } catch (error: any) {
       console.error('Failed to save customer:', error);
@@ -161,11 +168,16 @@ export class CustomerManagement implements OnInit {
     this.mapUrl = null;
   }
 
+  closeFormModal(): void {
+    if (this.saving()) return;
+    this.resetForm();
+  }
+
   resetForm(): void {
+    this.showFormModal = false;
     this.isEdit = false;
     this.currentId = '';
     this.formError.set('');
-    this.formMessage.set('');
 
     this.form = {
       name: '',
