@@ -27,6 +27,7 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
   readonly calculateError = signal('');
 
   private map: L.Map | null = null;
+  private routeLines = new Map<number, L.Polyline>();
   private allRoutesBounds: L.LatLngBounds | null = null;
   private viewReady = false;
 
@@ -131,7 +132,7 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
 
     const plan = this.plan();
     const allPoints: L.LatLngExpression[] = [[latitude, longitude]];
-    const routeLines = new Map<number, L.Polyline>();
+    this.routeLines = new Map<number, L.Polyline>();
     this.selectedRouteIndex.set(null);
     this.allRoutesBounds = null;
 
@@ -144,7 +145,7 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
 
       if (geometry.length > 1) {
         const line = L.polyline(geometry, { color, weight: 5, opacity: 0.85 }).addTo(this.map!);
-        routeLines.set(routeIndex, line);
+        this.routeLines.set(routeIndex, line);
         allPoints.push(...geometry);
       }
 
@@ -161,7 +162,7 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
           .bindPopup(
             `ไรเดอร์ ${route.rider.name}<br>จุดที่ ${stop.stop_sequence}: ${stop.customer_name}<br>${stop.quantity} กล่อง`
           )
-          .on('click', () => this.focusRoute(routeIndex, routeLines))
+          .on('click', () => this.focusRoute(routeIndex))
           .addTo(this.map!);
       });
     });
@@ -190,9 +191,13 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
     return routeColor || this.routeColors[routeIndex % this.routeColors.length]!;
   }
 
-  private focusRoute(routeIndex: number, routeLines: Map<number, L.Polyline>): void {
+  focusRouteByIndex(routeIndex: number): void {
+    this.focusRoute(routeIndex);
+  }
+
+  private focusRoute(routeIndex: number): void {
     this.selectedRouteIndex.set(routeIndex);
-    routeLines.forEach((line, index) => {
+    this.routeLines.forEach((line, index) => {
       if (index === routeIndex) {
         line.setStyle({ opacity: 1, weight: 7 });
         line.bringToFront();
@@ -201,7 +206,7 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    const selectedLine = routeLines.get(routeIndex);
+    const selectedLine = this.routeLines.get(routeIndex);
     if (selectedLine) {
       this.map?.fitBounds(selectedLine.getBounds().pad(0.2));
     }

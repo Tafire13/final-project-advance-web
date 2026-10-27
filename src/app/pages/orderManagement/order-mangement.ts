@@ -19,6 +19,10 @@ export class OrderManagement implements OnInit {
     readonly ordersLoading = signal(false);
     readonly customersLoading = signal(false);
     readonly loading = computed(() => this.ordersLoading() || this.customersLoading());
+    readonly listError = signal('');
+    readonly actionError = signal('');
+    readonly actionMessage = signal('');
+    readonly actionLoading = signal(false);
 
     isEditMode = false;
     editingOrderId: number | null = null;
@@ -38,6 +42,7 @@ export class OrderManagement implements OnInit {
     }
 
     reloadAllData(): void {
+        this.listError.set('');
         this.ordersLoading.set(true);
         this.customersLoading.set(true);
 
@@ -49,6 +54,7 @@ export class OrderManagement implements OnInit {
             error: (err) => {
                 console.error('Error fetching orders:', err);
                 this.ordersLoading.set(false);
+                this.listError.set('โหลดรายการออเดอร์ไม่สำเร็จ กรุณากดโหลดข้อมูลใหม่');
             }
         });
 
@@ -60,18 +66,21 @@ export class OrderManagement implements OnInit {
             error: (err) => {
                 console.error('Error fetching customers:', err);
                 this.customersLoading.set(false);
+                this.actionError.set('โหลดรายชื่อลูกค้าไม่สำเร็จ จึงยังสร้างออเดอร์ไม่ได้');
             }
         });
     }
 
     onSaveOrder(): void {
+        this.actionError.set('');
+        this.actionMessage.set('');
         if (!this.selectedCustomerId && this.selectedCustomerId !== 0) {
-            alert('กรุณาเลือกลูกค้าก่อนสั่งซื้อ');
+            this.actionError.set('กรุณาเลือกลูกค้าก่อนสั่งซื้อ');
             return;
         }
 
         if (this.quantity < 1 || this.quantity > 3) {
-            alert('สั่งซื้อได้ 1-3 กล่องเท่านั้น');
+            this.actionError.set('จำนวนกล่องต้องอยู่ระหว่าง 1–3 กล่อง');
             return;
         }
 
@@ -82,22 +91,32 @@ export class OrderManagement implements OnInit {
         };
 
         if (this.isEditMode && this.editingOrderId !== null) {
+            this.actionLoading.set(true);
             this.orderApi.updateOrderByID(this.editingOrderId, payload).subscribe({
                 next: () => {
-                    alert('แก้ไขออเดอร์สำเร็จ');
+                    this.actionLoading.set(false);
                     this.resetForm();
+                    this.actionMessage.set('แก้ไขออเดอร์เรียบร้อยแล้ว');
                     this.reloadAllData();
                 },
-                error: (err: any) => alert(err.error?.error || 'ไม่สามารถแก้ไขออเดอร์ได้')
+                error: (err: any) => {
+                    this.actionLoading.set(false);
+                    this.actionError.set(err.error?.error || 'ไม่สามารถแก้ไขออเดอร์ได้ กรุณาลองอีกครั้ง');
+                }
             });
         } else {
+            this.actionLoading.set(true);
             this.orderApi.createOrder(payload).subscribe({
                 next: () => {
-                    alert('สร้างรายการออเดอร์สำเร็จ');
+                    this.actionLoading.set(false);
                     this.resetForm();
+                    this.actionMessage.set('สร้างรายการออเดอร์เรียบร้อยแล้ว');
                     this.reloadAllData();
                 },
-                error: (err: any) => alert(err.error?.error || 'ไม่สามารถสร้างออเดอร์ได้')
+                error: (err: any) => {
+                    this.actionLoading.set(false);
+                    this.actionError.set(err.error?.error || 'ไม่สามารถสร้างออเดอร์ได้ กรุณาลองอีกครั้ง');
+                }
             });
         }
     }
@@ -124,24 +143,25 @@ export class OrderManagement implements OnInit {
 
     onRandom(): void {
         const amount = Number(this.randomAmount);
+        this.actionError.set('');
+        this.actionMessage.set('');
 
         if (!Number.isInteger(amount) || amount < 20 || amount > 30) {
-            alert('จำนวนออเดอร์จำลองต้องเป็นจำนวนเต็มระหว่าง 20-30 รายการ');
+            this.actionError.set('จำนวนออเดอร์จำลองต้องเป็นจำนวนเต็มระหว่าง 20–30 รายการ');
             return;
         }
 
+        this.actionLoading.set(true);
         this.orderApi.randomOrder(this.randomAmount).subscribe({
             next: (result) => {
-                alert(
-                    `สุ่มออเดอร์สำเร็จ ${result.amount} รายการ\n` +
-                    `ลูกค้า ${result.unique_customers} คน\n` +
-                    `จุดส่ง ${result.unique_delivery_points} จุด`
-                );
+                this.actionLoading.set(false);
+                this.actionMessage.set(`สร้างออเดอร์จำลอง ${result.amount} รายการ จากลูกค้า ${result.unique_customers} คน รวม ${result.unique_delivery_points} จุดส่ง`);
                 this.reloadAllData();
             },
             error: (err: any) => {
                 console.error(err);
-                alert(err?.error?.error || 'ไม่สามารถสุ่มออเดอร์ได้');
+                this.actionLoading.set(false);
+                this.actionError.set(err?.error?.error || 'ไม่สามารถสุ่มออเดอร์ได้ กรุณาลองอีกครั้ง');
             }
         });
     }
@@ -149,9 +169,19 @@ export class OrderManagement implements OnInit {
     onCancel(id: number): void {
         if (!confirm('ต้องการลบรายการออเดอร์นี้ใช่หรือไม่ ?')) return;
 
+        this.actionError.set('');
+        this.actionMessage.set('');
+        this.actionLoading.set(true);
         this.orderApi.deleteOrderByID(id).subscribe({
-            next: () => this.reloadAllData(),
-            error: (err: any) => alert(err.error?.error || 'เกิดข้อผิดพลาด')
+            next: () => {
+                this.actionLoading.set(false);
+                this.actionMessage.set('ลบออเดอร์เรียบร้อยแล้ว');
+                this.reloadAllData();
+            },
+            error: (err: any) => {
+                this.actionLoading.set(false);
+                this.actionError.set(err.error?.error || 'ลบออเดอร์ไม่สำเร็จ กรุณาลองอีกครั้ง');
+            }
         });
     }
 
@@ -164,15 +194,21 @@ export class OrderManagement implements OnInit {
     }
 
     clearDemoOrder(): void {
+        this.actionError.set('');
+        this.actionMessage.set('');
+        this.actionLoading.set(true);
         this.ordersLoading.set(true);
 
         this.orderApi.clearDemoOrder().subscribe({
-            next: () => {
+            next: (result) => {
+                this.actionLoading.set(false);
+                this.actionMessage.set(result?.message || 'ล้างออเดอร์จำลองเรียบร้อยแล้ว');
                 this.reloadAllData();
             },
             error: (err: any) => {
+                this.actionLoading.set(false);
                 this.ordersLoading.set(false);
-                alert(err.error?.error || 'เกิดข้อผิดพลาด');
+                this.actionError.set(err.error?.error || 'ล้างออเดอร์จำลองไม่สำเร็จ กรุณาลองอีกครั้ง');
             }
         });
     }

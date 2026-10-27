@@ -17,6 +17,11 @@ export class CustomerManagement implements OnInit {
 
     readonly customers = signal<CustomerModel[]>([]);
     readonly loading = signal(false);
+    readonly listError = signal('');
+    readonly listMessage = signal('');
+    readonly formError = signal('');
+    readonly formMessage = signal('');
+    readonly saving = signal(false);
     selectedCustomerForMap: CustomerModel | null = null;
     mapUrl: SafeResourceUrl | null = null;
     searchText = signal('');
@@ -39,6 +44,8 @@ export class CustomerManagement implements OnInit {
 
     searchCustomerByName() {
         const keyword = this.searchText().trim();
+        this.listError.set('');
+        this.listMessage.set('');
 
         if (!keyword) {
             this.loadCustomers();
@@ -54,12 +61,14 @@ export class CustomerManagement implements OnInit {
             error: (err) => {
                 console.error('Failed to search customers', err);
                 this.loading.set(false);
+                this.listError.set('ค้นหาลูกค้าไม่สำเร็จ กรุณาลองอีกครั้ง');
             }
         });
     }
 
     loadCustomers(): void {
         this.loading.set(true);
+        this.listError.set('');
         this.customerApi.getCustomers().subscribe({
             next: (data) => {
                 this.customers.set(data || []);
@@ -68,12 +77,15 @@ export class CustomerManagement implements OnInit {
             error: (err) => {
                 console.error('Failed to load customers', err);
                 this.loading.set(false);
+                this.listError.set('โหลดรายชื่อลูกค้าไม่สำเร็จ กรุณากดโหลดข้อมูลใหม่');
             }
         });
     }
 
     onEdit(cust: CustomerModel): void {
         this.isEdit = true;
+        this.formError.set('');
+        this.formMessage.set('');
         this.currentId = cust.id;
         this.form = {
             name: cust.name,
@@ -85,24 +97,30 @@ export class CustomerManagement implements OnInit {
     }
 
     onSubmit(): void {
+        this.formError.set('');
+        this.formMessage.set('');
         if (!this.form.name.trim() || !this.form.phone.trim()) {
-            alert('กรุณากรอกชื่อและเบอร์โทรให้ครบถ้วน');
+            this.formError.set('กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบ');
             return;
         }
 
+        const wasEdit = this.isEdit;
+        this.saving.set(true);
         const req$ = this.isEdit
             ? this.customerApi.updateCustomerByID(String(this.currentId), this.form)
             : this.customerApi.createCustomer(this.form);
 
         req$.subscribe({
             next: () => {
-                alert(this.isEdit ? 'อัปเดตข้อมูลแล้ว' : 'เพิ่มลูกค้าเรียบร้อย');
+                this.saving.set(false);
                 this.resetForm();
+                this.formMessage.set(wasEdit ? 'บันทึกการแก้ไขลูกค้าแล้ว' : 'เพิ่มลูกค้าเรียบร้อยแล้ว');
                 this.loadCustomers();
             },
             error: (err) => {
                 console.error('Submit error:', err);
-                alert('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+                this.saving.set(false);
+                this.formError.set(err?.error?.error || 'บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบแล้วลองอีกครั้ง');
             }
         });
     }
@@ -116,12 +134,12 @@ export class CustomerManagement implements OnInit {
 
         this.customerApi.deleteCustomerByID(String(id)).subscribe({
             next: () => {
-                alert('ลบข้อมูลเรียบร้อย');
+                this.listMessage.set('ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
                 this.loadCustomers();
             },
             error: (err) => {
                 console.error('Delete error:', err);
-                alert('ลบไม่สำเร็จ');
+                this.listError.set(err?.error?.error || 'ลบข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง');
             }
         });
     }
@@ -140,6 +158,9 @@ export class CustomerManagement implements OnInit {
     resetForm(): void {
         this.isEdit = false;
         this.currentId = '';
+        this.formError.set('');
+        this.formMessage.set('');
+        this.saving.set(false);
         this.form = {
             name: '',
             phone: '',

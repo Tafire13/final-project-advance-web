@@ -1,15 +1,18 @@
 .nav-link {
+  flex: 0 0 auto;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  padding: 0 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
   color: #334155;
   background: #ffffff;
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .nav-link:hover {
@@ -17,8 +20,8 @@
 }
 
 .nav-link.active {
-  border-color: #2563eb;
-  background: #2563eb;
+  border-color: #1d4ed8;
+  background: #1d4ed8;
   color: #ffffff;
 }
 

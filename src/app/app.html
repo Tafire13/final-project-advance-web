@@ -1,22 +1,25 @@
 @if (!isRiderPage()) {
-<header class="border-b border-slate-300 bg-white">
-  <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-    <div>
-      <p class="text-lg font-semibold text-slate-900">ระบบจัดส่งอาหาร</p>
-      <p class="text-sm text-slate-600">จัดการลูกค้า ออเดอร์ และงานจัดส่ง</p>
-    </div>
+<header class="border-b border-slate-200 bg-white">
+  <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+    <a routerLink="/customers" class="flex min-h-11 items-center gap-3 self-start rounded-lg text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 text-sm font-bold text-white" aria-hidden="true">ส</span>
+      <span>
+        <span class="block text-base font-semibold text-slate-900">ระบบจัดส่งอาหาร</span>
+        <span class="block text-sm text-slate-600">จัดการลูกค้า ออเดอร์ และงานจัดส่ง</span>
+      </span>
+    </a>
 
     <nav class="flex flex-wrap gap-2" aria-label="เมนูหลัก">
-      <a routerLink="/customers" routerLinkActive="active" class="nav-link">ลูกค้า</a>
-      <a routerLink="/orders" routerLinkActive="active" class="nav-link">ออเดอร์</a>
-      <a routerLink="/plans" routerLinkActive="active" class="nav-link">วางแผนเส้นทาง</a>
-      <a routerLink="/jobs" routerLinkActive="active" class="nav-link">ใบงานจัดส่ง</a>
+      <a routerLink="/customers" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">ลูกค้า</a>
+      <a routerLink="/orders" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">ออเดอร์</a>
+      <a routerLink="/plans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">วางแผนเส้นทาง</a>
+      <a routerLink="/jobs" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">ใบงานจัดส่ง</a>
       <a routerLink="/rider" class="nav-link">สำหรับไรเดอร์</a>
     </nav>
   </div>
 </header>
 }
 
-<main class="min-h-screen bg-slate-50">
+<div class="min-h-screen bg-slate-50">
   <router-outlet></router-outlet>
-</main>
+</div>

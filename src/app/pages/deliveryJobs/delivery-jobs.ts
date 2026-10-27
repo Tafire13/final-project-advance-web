@@ -16,6 +16,8 @@ export class DeliveryJobs implements OnInit {
   readonly loading = signal(false);
   readonly selected = signal<DeliveryJobDetailModel | null>(null);
   readonly detailLoading = signal(false);
+  readonly loadError = signal('');
+  readonly detailError = signal('');
 
   constructor(private jobApi: JobApiService) {}
 
@@ -24,6 +26,8 @@ export class DeliveryJobs implements OnInit {
   }
 
   loadJobs(): void {
+    this.loadError.set('');
+    this.detailError.set('');
     this.loading.set(true);
     this.jobApi.getJobs(this.search.trim()).subscribe({
       next: (res) => {
@@ -33,6 +37,7 @@ export class DeliveryJobs implements OnInit {
       error: (e) => {
         console.error('load jobs fail', e);
         this.loading.set(false);
+        this.loadError.set('โหลดใบงานไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
       }
     });
   }
@@ -43,6 +48,7 @@ export class DeliveryJobs implements OnInit {
 
   openDetail(code: string): void {
     if (!code) return;
+    this.detailError.set('');
     this.detailLoading.set(true);
     this.jobApi.getJobByCode(code).subscribe({
       next: (res) => {
@@ -51,8 +57,8 @@ export class DeliveryJobs implements OnInit {
       },
       error: (e) => {
         console.error(e);
-        alert(e?.error?.error || 'ไม่พบใบงาน เช่น JOB001');
         this.detailLoading.set(false);
+        this.detailError.set(e?.error?.error || 'เปิดรายละเอียดไม่ได้ กรุณาลองใหม่');
       }
     });
   }
