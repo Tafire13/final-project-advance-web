@@ -1,43 +1,23 @@
 <div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
   <header>
     <h1 class="text-2xl font-semibold text-slate-900">วางแผนเส้นทาง</h1>
-    <p class="text-sm text-slate-600">เลือกวันที่และจำนวนไรเดอร์ แล้วคำนวณเส้นทางจากออเดอร์ที่รอจัดส่ง</p>
+    <p class="text-sm text-slate-600">กดคำนวณ ระบบจะใช้วันที่ปัจจุบันและจัดจำนวนไรเดอร์ให้อัตโนมัติ</p>
   </header>
 
   <section class="border border-slate-300 bg-white p-4" aria-labelledby="calculate-title">
     <h2 id="calculate-title" class="mb-3 font-semibold text-slate-900">ข้อมูลสำหรับคำนวณ</h2>
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
-      <label class="block text-sm text-slate-700">
-        วันที่จัดส่ง
-        <input
-          type="date"
-          class="mt-1 min-h-11 w-full border border-slate-300 px-3"
-          [value]="deliveryDate()"
-          (input)="deliveryDate.set($any($event.target).value)"
-        />
-      </label>
-
-      <label class="block text-sm text-slate-700">
-        จำนวนไรเดอร์
-        <input
-          type="number"
-          min="1"
-          max="10"
-          class="mt-1 min-h-11 w-full border border-slate-300 px-3"
-          [value]="riderCount()"
-          (input)="riderCount.set(+$any($event.target).value)"
-        />
-      </label>
-
+    <div class="grid grid-cols-1 gap-3 sm:max-w-sm">
+      <p class="text-sm text-slate-600">ระบบใช้วันที่ตามเวลาไทย (Asia/Bangkok) และนับเฉพาะออเดอร์ pending ของวันนี้</p>
       <button
         type="button"
         class="min-h-11 bg-blue-600 px-4 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-        [disabled]="mapLoading() || calculating() || !deliveryDate() || riderCount() < 1 || riderCount() > 10"
+        [disabled]="mapLoading() || calculating()"
         (click)="onCalculate()"
       >
         {{ calculating() ? 'กำลังคำนวณ...' : 'คำนวณเส้นทาง' }}
       </button>
     </div>
+    <p class="mt-2 text-sm text-slate-600">ระบบจัดให้ไม่เกิน 3 จุดส่งต่อไรเดอร์</p>
     <p *ngIf="calculateError()" class="mt-3 text-sm text-red-700" role="alert">
       {{ calculateError() }}
     </p>
@@ -59,7 +39,7 @@
         ผลแผนจัดส่ง #{{ currentPlan.plan_id }}
       </h2>
       <p class="mt-1 text-sm text-slate-600">
-        วันที่ {{ currentPlan.delivery_date }} · {{ currentPlan.total_orders }} ออเดอร์ · {{ currentPlan.total_boxes }} กล่อง
+        วันที่ {{ currentPlan.delivery_date }} · {{ currentPlan.total_orders }} ออเดอร์ · {{ currentPlan.total_boxes }} กล่อง · {{ currentPlan.rider_count }} ไรเดอร์
       </p>
       <p class="mt-1 text-sm text-slate-600">
         ระยะทางรวม {{ currentPlan.distance_km }} กม. · ค่าส่ง {{ currentPlan.delivery_cost }} บาท

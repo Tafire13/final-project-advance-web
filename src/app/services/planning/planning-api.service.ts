@@ -3,7 +3,6 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../config/api.config';
 import type {
-  PlanRequestModel,
   PlanResultModel,
   ShopModel
 } from '../../models/planning/planning.model';
@@ -18,10 +17,10 @@ export class PlanningApiService {
     return this.http.get<ShopModel>(`${API_BASE_URL}/plans/shop`);
   }
 
-  calculatePlan(data: PlanRequestModel): Observable<PlanResultModel> {
+  calculatePlan(): Observable<PlanResultModel> {
     return this.http.post<PlanResultModel>(
       `${API_BASE_URL}/plans/calculate`,
-      data
+      {}
     );
   }
 }

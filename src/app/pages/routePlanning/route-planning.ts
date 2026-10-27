@@ -14,8 +14,6 @@ import type { PlanResultModel, ShopModel } from '../../models/planning/planning.
 export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
   readonly shop = signal<ShopModel | null>(null);
   readonly plan = signal<PlanResultModel | null>(null);
-  readonly deliveryDate = signal(this.getTodayDate());
-  readonly riderCount = signal(1);
   readonly mapLoading = signal(true);
   readonly mapError = signal('');
   readonly calculating = signal(false);
@@ -57,22 +55,11 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private getTodayDate(): string {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   onCalculate(): void {
     this.calculateError.set('');
     this.calculating.set(true);
 
-    this.planningApi.calculatePlan({
-      delivery_date: this.deliveryDate(),
-      rider_count: Number(this.riderCount())
-    }).subscribe({
+    this.planningApi.calculatePlan().subscribe({
       next: (result) => {
         this.plan.set(result);
         this.calculating.set(false);

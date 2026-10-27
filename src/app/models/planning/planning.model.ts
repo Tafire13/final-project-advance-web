@@ -7,11 +7,6 @@ export interface ShopModel {
   cost_per_box?: string | number;
 }
 
-export interface PlanRequestModel {
-  delivery_date: string;
-  rider_count: number;
-}
-
 export interface PlannedStopModel {
   id: number;
   customer_id: number;
