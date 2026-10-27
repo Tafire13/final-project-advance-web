@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../config/api.config';
-import type { ClearDemoOrderResponse, CreateOrderModel, OrderModel, UpdateOrderModel } from '../../models/order/order.model';
+import type { ClearDemoOrderResponse, CreateOrderModel, OrderModel, RandomOrderResponse, UpdateOrderModel } from '../../models/order/order.model';
 
 @Injectable({
   providedIn: 'root'
@@ -30,8 +30,8 @@ export class OrderApiService {
     return this.http.delete(`${API_BASE_URL}/order/${id}`);
   }
 
-  randomOrder(amount = 20): Observable<unknown> {
-    return this.http.post(`${API_BASE_URL}/order/random`, { amount });
+  randomOrder(amount = 20): Observable<RandomOrderResponse> {
+    return this.http.post<RandomOrderResponse>(`${API_BASE_URL}/order/random`, { amount });
   }
 
   clearDemoOrder(): Observable<ClearDemoOrderResponse> {

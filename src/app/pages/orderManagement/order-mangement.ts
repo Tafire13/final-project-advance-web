@@ -131,8 +131,12 @@ export class OrderManagement implements OnInit {
         }
 
         this.orderApi.randomOrder(this.randomAmount).subscribe({
-            next: () => {
-                alert(`สุ่มออเดอร์สำเร็จจำนวน ${this.randomAmount} รายการ`);
+            next: (result) => {
+                alert(
+                    `สุ่มออเดอร์สำเร็จ ${result.amount} รายการ\n` +
+                    `ลูกค้า ${result.unique_customers} คน\n` +
+                    `จุดส่ง ${result.unique_delivery_points} จุด`
+                );
                 this.reloadAllData();
             },
             error: (err: any) => {

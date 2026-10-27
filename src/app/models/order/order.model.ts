@@ -27,3 +27,11 @@ export interface ClearDemoOrderResponse {
   message: string;
   deleted_orders: number;
 }
+
+export interface RandomOrderResponse {
+  message: string;
+  amount: number;
+  unique_customers: number;
+  unique_delivery_points: number;
+  orders: OrderModel[];
+}
