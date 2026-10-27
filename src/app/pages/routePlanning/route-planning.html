@@ -14,10 +14,10 @@
         [disabled]="mapLoading() || planLoading() || calculating()"
         (click)="onCalculate()"
       >
-        {{ calculating() ? 'กำลังคำนวณ...' : 'คำนวณเส้นทาง' }}
+        {{ calculating() ? 'กำลังคำนวณ...' : (plan() ? 'คำนวณเส้นทางใหม่' : 'คำนวณเส้นทาง') }}
       </button>
     </div>
-    <p class="mt-2 text-sm text-slate-600">ระบบจัดให้ไม่เกิน 3 จุดส่งต่อไรเดอร์</p>
+    <p class="mt-2 text-sm text-slate-600">ระบบจัดให้ไม่เกิน 3 จุดส่งต่อไรเดอร์ กดคำนวณเส้นทางใหม่เพื่อดูการแบ่งงานทางเลือก</p>
     <p *ngIf="calculateError()" class="mt-3 text-sm text-red-700" role="alert">
       {{ calculateError() }}
     </p>
