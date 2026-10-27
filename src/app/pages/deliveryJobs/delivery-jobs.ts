@@ -10,7 +10,7 @@ import type { DeliveryJobDetailModel, DeliveryJobModel } from '../../models/job/
   selector: 'app-delivery-jobs',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './delivery-jobs.html'
+  templateUrl: './delivery-jobs.html',
 })
 export class DeliveryJobs implements OnInit, OnDestroy {
   private readonly jobApi = inject(JobApiService);
@@ -89,41 +89,57 @@ export class DeliveryJobs implements OnInit, OnDestroy {
     let geometry: number[][] = [];
 
     try {
-      geometry = typeof job.geometry === 'string'
-        ? JSON.parse(job.geometry) as number[][]
-        : job.geometry;
+      geometry =
+        typeof job.geometry === 'string' ? (JSON.parse(job.geometry) as number[][]) : job.geometry;
     } catch {
       geometry = [];
     }
 
-    const validGeometry = Array.isArray(geometry)
-      ? geometry.filter((point) =>
-          Array.isArray(point) && point.length >= 2 &&
-          Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1]))
-        ).map((point) => [Number(point[0]), Number(point[1])] as [number, number])
-      : [];
-    const stops = [...job.stops].sort((first, second) => first.stop_sequence - second.stop_sequence);
-    const stopPoints = stops.map((stop) =>
-      [Number(stop.latitude), Number(stop.longitude)] as [number, number]
-    ).filter(([latitude, longitude]) => Number.isFinite(latitude) && Number.isFinite(longitude));
-    const points = validGeometry.length > 0 ? validGeometry : stopPoints;
+    const routePoints: [number, number][] = [];
+    if (Array.isArray(geometry)) {
+      for (const point of geometry) {
+        if (!Array.isArray(point) || point.length < 2) continue;
+
+        const latitude = Number(point[0]);
+        const longitude = Number(point[1]);
+        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+          routePoints.push([latitude, longitude]);
+        }
+      }
+    }
+
+    const stops = [...job.stops].sort(
+      (first, second) => first.stop_sequence - second.stop_sequence,
+    );
+    const stopPoints: [number, number][] = [];
+    for (const stop of stops) {
+      const latitude = Number(stop.latitude);
+      const longitude = Number(stop.longitude);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        stopPoints.push([latitude, longitude]);
+      }
+    }
+
+    const points = routePoints.length > 0 ? routePoints : stopPoints;
     if (points.length === 0) return;
 
     const routeColor = /^#[\da-f]{6}$/i.test(job.color) ? job.color : '#db2777';
     this.detailMap = L.map(element).setView(points[0]!, 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors',
     }).addTo(this.detailMap);
 
-    if (validGeometry.length > 1) {
-      L.polyline(validGeometry, { color: routeColor, weight: 5, opacity: 0.9 }).addTo(this.detailMap);
-      L.circleMarker(validGeometry[0]!, {
+    if (routePoints.length > 1) {
+      L.polyline(routePoints, { color: routeColor, weight: 5, opacity: 0.9 }).addTo(this.detailMap);
+      L.circleMarker(routePoints[0]!, {
         radius: 8,
         color: '#fff',
         weight: 2,
         fillColor: '#0f172a',
-        fillOpacity: 1
-      }).bindPopup('จุดเริ่มต้น: ร้าน').addTo(this.detailMap);
+        fillOpacity: 1,
+      })
+        .bindPopup('จุดเริ่มต้น: ร้าน')
+        .addTo(this.detailMap);
     }
 
     stops.forEach((stop) => {
@@ -135,7 +151,7 @@ export class DeliveryJobs implements OnInit, OnDestroy {
         className: 'delivery-job-stop-marker',
         html: `<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid white;border-radius:50%;background:${routeColor};color:white;font-weight:700;box-shadow:0 1px 4px #555">${stop.stop_sequence}</span>`,
         iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        iconAnchor: [15, 15],
       });
       const popup = document.createElement('div');
       popup.textContent = `จุดที่ ${stop.stop_sequence} — ${stop.customer_name} (${stop.quantity} กล่อง)`;
@@ -151,7 +167,7 @@ export class DeliveryJobs implements OnInit, OnDestroy {
     if (!job) return '';
 
     const stops = [...job.stops].sort(
-      (first, second) => first.stop_sequence - second.stop_sequence
+      (first, second) => first.stop_sequence - second.stop_sequence,
     );
     const stopNames: string[] = [];
 

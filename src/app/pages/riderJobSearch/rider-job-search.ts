@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import * as L from 'leaflet';
 import type { DeliveryJobDetailModel } from '../../models/job/job.model';
@@ -13,7 +12,7 @@ import { JobApiService } from '../../services/job/job-api.service';
   selector: 'app-rider-job-search',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './rider-job-search.html'
+  templateUrl: './rider-job-search.html',
 })
 export class RiderJobSearch implements OnInit, OnDestroy {
   private readonly jobApi = inject(JobApiService);
@@ -77,10 +76,10 @@ export class RiderJobSearch implements OnInit, OnDestroy {
     this.job.set(null);
 
     try {
-      const data = await lastValueFrom(this.jobApi.getJobByCode(code));
-      data.stops.sort((first, second) => first.stop_sequence - second.stop_sequence);
-      this.job.set(data);
-      setTimeout(() => this.renderMap(data), 0);
+      const jobDetails = await lastValueFrom(this.jobApi.getJobByCode(code));
+      jobDetails.stops.sort((first, second) => first.stop_sequence - second.stop_sequence);
+      this.job.set(jobDetails);
+      setTimeout(() => this.renderMap(jobDetails), 0);
     } catch (error: any) {
       if (error.status === 404) {
         this.error.set('ไม่พบใบงานนี้ กรุณาตรวจสอบเลขใบงานกับร้านแล้วลองอีกครั้ง');
@@ -100,21 +99,19 @@ export class RiderJobSearch implements OnInit, OnDestroy {
 
     try {
       await lastValueFrom(this.jobApi.completeStop(this.code, stop.order_id));
-      this.job.update((currentJob) => {
-        if (!currentJob) return currentJob;
-        return {
-          ...currentJob,
-          stops: currentJob.stops.map((currentStop) =>
-            currentStop.order_id === stop.order_id
-              ? { ...currentStop, status: 'delivered' }
-              : currentStop
-          )
-        };
-      });
+      const currentJob = this.job();
+      if (currentJob) {
+        const updatedStops = currentJob.stops.map((currentStop) => {
+          if (currentStop.order_id !== stop.order_id) return currentStop;
+          return { ...currentStop, status: 'delivered' as const };
+        });
+
+        this.job.set({ ...currentJob, stops: updatedStops });
+      }
     } catch (error: any) {
       this.stopActionError.set({
         orderId: stop.order_id,
-        message: error?.error?.error || 'บันทึกสถานะไม่สำเร็จ กรุณาลองอีกครั้ง'
+        message: error?.error?.error || 'บันทึกสถานะไม่สำเร็จ กรุณาลองอีกครั้ง',
       });
     } finally {
       this.completingOrderId.set(null);
@@ -134,51 +131,62 @@ export class RiderJobSearch implements OnInit, OnDestroy {
     let geometry: number[][] = [];
 
     try {
-      geometry = typeof job.geometry === 'string'
-        ? JSON.parse(job.geometry) as number[][]
-        : job.geometry;
+      geometry =
+        typeof job.geometry === 'string' ? (JSON.parse(job.geometry) as number[][]) : job.geometry;
     } catch {
       geometry = [];
     }
 
-    const validGeometry = Array.isArray(geometry)
-      ? geometry.filter((point) =>
-          Array.isArray(point) && point.length >= 2 &&
-          Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1]))
-        ).map((point) => [Number(point[0]), Number(point[1])] as [number, number])
-      : [];
+    // จุดใน geometry เรียงเป็น [latitude, longitude]
+    const routePoints: [number, number][] = [];
+    if (Array.isArray(geometry)) {
+      for (const point of geometry) {
+        if (!Array.isArray(point) || point.length < 2) continue;
 
-    const stopPoints = job.stops.map((stop) =>
-      [Number(stop.latitude), Number(stop.longitude)] as [number, number]
-    ).filter(([latitude, longitude]) =>
-      Number.isFinite(latitude) && Number.isFinite(longitude)
-    );
-    const points = validGeometry.length > 0 ? validGeometry : stopPoints;
+        const latitude = Number(point[0]);
+        const longitude = Number(point[1]);
+        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+          routePoints.push([latitude, longitude]);
+        }
+      }
+    }
+
+    const stopPoints: [number, number][] = [];
+    for (const stop of job.stops) {
+      const latitude = Number(stop.latitude);
+      const longitude = Number(stop.longitude);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        stopPoints.push([latitude, longitude]);
+      }
+    }
+    const points = routePoints.length > 0 ? routePoints : stopPoints;
     if (points.length === 0) return;
 
     this.map = L.map(element).setView(points[0]!, 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors',
     }).addTo(this.map);
 
-    if (validGeometry.length > 1) {
-      L.polyline(validGeometry, {
+    if (routePoints.length > 1) {
+      L.polyline(routePoints, {
         color: job.color || '#dc2626',
         weight: 5,
-        opacity: 0.85
+        opacity: 0.85,
       }).addTo(this.map);
     }
 
-    if (validGeometry.length > 0) {
+    if (routePoints.length > 0) {
       const shopPopup = document.createElement('span');
       shopPopup.textContent = 'จุดเริ่มต้น: ร้าน';
-      L.circleMarker(validGeometry[0]!, {
+      L.circleMarker(routePoints[0]!, {
         radius: 8,
         color: '#fff',
         weight: 2,
         fillColor: '#1e293b',
-        fillOpacity: 1
-      }).bindPopup(shopPopup).addTo(this.map);
+        fillOpacity: 1,
+      })
+        .bindPopup(shopPopup)
+        .addTo(this.map);
     }
 
     job.stops.forEach((stop) => {
@@ -190,13 +198,11 @@ export class RiderJobSearch implements OnInit, OnDestroy {
         className: 'rider-stop-marker',
         html: `<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid white;border-radius:50%;background:${job.color || '#dc2626'};color:white;font-weight:700;box-shadow:0 1px 4px #555">${stop.stop_sequence}</span>`,
         iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        iconAnchor: [15, 15],
       });
       const popup = document.createElement('div');
       popup.textContent = `จุดที่ ${stop.stop_sequence} — ${stop.customer_name} (${stop.quantity} กล่อง)`;
-      L.marker([latitude, longitude], { icon: markerIcon })
-        .bindPopup(popup)
-        .addTo(this.map!);
+      L.marker([latitude, longitude], { icon: markerIcon }).bindPopup(popup).addTo(this.map!);
     });
 
     this.map.fitBounds(L.latLngBounds(points).pad(0.15));
