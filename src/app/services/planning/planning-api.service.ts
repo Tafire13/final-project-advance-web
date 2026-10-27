@@ -17,6 +17,10 @@ export class PlanningApiService {
     return this.http.get<ShopModel>(`${API_BASE_URL}/plans/shop`);
   }
 
+  getCurrentPlan(): Observable<PlanResultModel> {
+    return this.http.get<PlanResultModel>(`${API_BASE_URL}/plans/current`);
+  }
+
   calculatePlan(): Observable<PlanResultModel> {
     return this.http.post<PlanResultModel>(
       `${API_BASE_URL}/plans/calculate`,
