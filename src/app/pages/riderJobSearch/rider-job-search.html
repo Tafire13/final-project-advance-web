@@ -73,6 +73,12 @@
         </dl>
       </div>
 
+      <section class="border border-slate-300 bg-white p-4" aria-labelledby="rider-map-title">
+        <h2 id="rider-map-title" class="mb-3 text-lg font-semibold">เส้นทางของคุณ</h2>
+        <div id="rider-route-map" class="h-[360px] w-full bg-slate-100 sm:h-[440px]" aria-label="แผนที่เส้นทางและจุดส่ง"></div>
+        <p class="mt-2 text-sm text-slate-600">เส้นสีแสดงเส้นทางจากร้านไปยังจุดส่ง หมายเลขบนหมุดคือลำดับการจัดส่ง</p>
+      </section>
+
       <h2 class="text-lg font-semibold">ส่งตามลำดับนี้</h2>
       <ol class="space-y-3">
         @for (stop of currentJob.stops; track stop.stop_sequence) {
