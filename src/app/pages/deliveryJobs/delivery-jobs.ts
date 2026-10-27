@@ -1,6 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { lastValueFrom } from 'rxjs';
 import { JobApiService } from '../../services/job/job-api.service';
 import type { DeliveryJobDetailModel, DeliveryJobModel } from '../../models/job/job.model';
 
@@ -11,73 +12,75 @@ import type { DeliveryJobDetailModel, DeliveryJobModel } from '../../models/job/
   templateUrl: './delivery-jobs.html'
 })
 export class DeliveryJobs implements OnInit {
+  private readonly jobApi = inject(JobApiService);
+
   readonly jobs = signal<DeliveryJobModel[]>([]);
-  search = '';
   readonly loading = signal(false);
   readonly selected = signal<DeliveryJobDetailModel | null>(null);
   readonly detailLoading = signal(false);
   readonly loadError = signal('');
   readonly detailError = signal('');
 
-  constructor(private jobApi: JobApiService) {}
+  search = '';
 
   ngOnInit(): void {
     this.loadJobs();
   }
 
-  loadJobs(): void {
+  async loadJobs(): Promise<void> {
+    this.loading.set(true);
     this.loadError.set('');
     this.detailError.set('');
-    this.loading.set(true);
-    this.jobApi.getJobs(this.search.trim()).subscribe({
-      next: (res) => {
-        this.jobs.set(res || []);
-        this.loading.set(false);
-      },
-      error: (e) => {
-        console.error('load jobs fail', e);
-        this.loading.set(false);
-        this.loadError.set('โหลดใบงานไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
-      }
-    });
+
+    try {
+      const jobs = await lastValueFrom(this.jobApi.getJobs(this.search.trim()));
+      this.jobs.set(jobs || []);
+    } catch (error) {
+      console.error('Failed to load jobs:', error);
+      this.loadError.set('โหลดใบงานไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   onSearch(): void {
     this.loadJobs();
   }
 
-  openDetail(code: string): void {
+  async openDetail(code: string): Promise<void> {
     if (!code) return;
-    this.detailError.set('');
+
     this.detailLoading.set(true);
-    this.jobApi.getJobByCode(code).subscribe({
-      next: (res) => {
-        this.selected.set(res);
-        this.detailLoading.set(false);
-      },
-      error: (e) => {
-        console.error(e);
-        this.detailLoading.set(false);
-        this.detailError.set(e?.error?.error || 'เปิดรายละเอียดไม่ได้ กรุณาลองใหม่');
-      }
-    });
+    this.detailError.set('');
+
+    try {
+      const job = await lastValueFrom(this.jobApi.getJobByCode(code));
+      this.selected.set(job);
+    } catch (error: any) {
+      console.error('Failed to load job details:', error);
+      this.detailError.set(error?.error?.error || 'เปิดรายละเอียดไม่ได้ กรุณาลองใหม่');
+    } finally {
+      this.detailLoading.set(false);
+    }
   }
 
   closeDetail(): void {
     this.selected.set(null);
   }
 
-  openNav(url: string): void {
-    if (url) window.open(url, '_blank');
-  }
-
   stopRouteText(): string {
-    const selected = this.selected();
-    if (!selected?.stops) return '';
-    return selected.stops
-      .slice()
-      .sort((a, b) => a.stop_sequence - b.stop_sequence)
-      .map((s) => `จุดที่ ${s.stop_sequence}`)
-      .join(' → ');
+    const job = this.selected();
+    if (!job) return '';
+
+    const stops = [...job.stops].sort(
+      (first, second) => first.stop_sequence - second.stop_sequence
+    );
+    const stopNames: string[] = [];
+
+    for (const stop of stops) {
+      stopNames.push(`จุดที่ ${stop.stop_sequence}`);
+    }
+
+    return stopNames.join(' → ');
   }
 }

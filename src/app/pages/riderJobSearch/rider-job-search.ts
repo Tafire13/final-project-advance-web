@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import * as L from 'leaflet';
 import type { DeliveryJobDetailModel } from '../../models/job/job.model';
 import { JobApiService } from '../../services/job/job-api.service';
@@ -13,17 +15,15 @@ import { JobApiService } from '../../services/job/job-api.service';
   templateUrl: './rider-job-search.html'
 })
 export class RiderJobSearch implements OnInit, OnDestroy {
+  private readonly jobApi = inject(JobApiService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
   code = '';
   readonly loading = signal(false);
   readonly error = signal('');
   readonly job = signal<DeliveryJobDetailModel | null>(null);
   private map: L.Map | null = null;
-
-  constructor(
-    private jobApi: JobApiService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
 
   ngOnInit(): void {
     // อ่านเลขใบงานจาก URL เช่น /rider/JOB000001-01
@@ -63,7 +63,7 @@ export class RiderJobSearch implements OnInit, OnDestroy {
     }
   }
 
-  loadJob(code: string): void {
+  async loadJob(code: string): Promise<void> {
     if (code.length > 32) {
       this.error.set('เลขใบงานต้องไม่เกิน 32 ตัวอักษร');
       return;
@@ -73,22 +73,20 @@ export class RiderJobSearch implements OnInit, OnDestroy {
     this.error.set('');
     this.job.set(null);
 
-    this.jobApi.getJobByCode(code).subscribe({
-      next: (data) => {
-        data.stops.sort((a, b) => a.stop_sequence - b.stop_sequence);
-        this.job.set(data);
-        this.loading.set(false);
-        setTimeout(() => this.renderMap(data), 0);
-      },
-      error: (err) => {
-        this.loading.set(false);
-        if (err.status === 404) {
-          this.error.set('ไม่พบใบงานนี้ กรุณาตรวจสอบเลขใบงานกับร้านแล้วลองอีกครั้ง');
-        } else {
-          this.error.set('ค้นหาใบงานไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง');
-        }
+    try {
+      const data = await lastValueFrom(this.jobApi.getJobByCode(code));
+      data.stops.sort((first, second) => first.stop_sequence - second.stop_sequence);
+      this.job.set(data);
+      setTimeout(() => this.renderMap(data), 0);
+    } catch (error: any) {
+      if (error.status === 404) {
+        this.error.set('ไม่พบใบงานนี้ กรุณาตรวจสอบเลขใบงานกับร้านแล้วลองอีกครั้ง');
+      } else {
+        this.error.set('ค้นหาใบงานไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง');
       }
-    });
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   private removeMap(): void {

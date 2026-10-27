@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { AfterViewInit, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { lastValueFrom } from 'rxjs';
 import * as L from 'leaflet';
 import { PlanningApiService } from '../../services/planning/planning-api.service';
 import type { PlanResultModel, ShopModel } from '../../models/planning/planning.model';
@@ -12,6 +13,8 @@ import type { PlanResultModel, ShopModel } from '../../models/planning/planning.
   templateUrl: './route-planning.html'
 })
 export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
+  private readonly planningApi = inject(PlanningApiService);
+
   readonly routeColors = [
     '#dc2626', '#16a34a', '#2563eb', '#9333ea', '#ea580c',
     '#0891b2', '#c2410c', '#4f46e5', '#65a30d', '#db2777'
@@ -31,8 +34,6 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
   private allRoutesBounds: L.LatLngBounds | null = null;
   private viewReady = false;
 
-  constructor(private planningApi: PlanningApiService) {}
-
   ngOnInit(): void {
     this.loadShop();
     this.loadCurrentPlan();
@@ -48,63 +49,60 @@ export class RoutePlanning implements OnInit, AfterViewInit, OnDestroy {
     this.map = null;
   }
 
-  private loadShop(): void {
+  private async loadShop(): Promise<void> {
     this.mapLoading.set(true);
     this.mapError.set('');
-    this.planningApi.getShop().subscribe({
-      next: (shop) => {
-        this.shop.set(shop);
-        this.mapLoading.set(false);
-        if (this.viewReady) setTimeout(() => this.renderBaseMap(), 0);
-      },
-      error: (error) => {
-        console.error('load shop fail', error);
-        this.mapLoading.set(false);
-        this.mapError.set('โหลดข้อมูลร้านไม่สำเร็จ กรุณาลองเปิดหน้านี้ใหม่');
-      }
-    });
+
+    try {
+      const shop = await lastValueFrom(this.planningApi.getShop());
+      this.shop.set(shop);
+      if (this.viewReady) setTimeout(() => this.renderBaseMap(), 0);
+    } catch (error) {
+      console.error('Failed to load shop:', error);
+      this.mapError.set('โหลดข้อมูลร้านไม่สำเร็จ กรุณาลองเปิดหน้านี้ใหม่');
+    } finally {
+      this.mapLoading.set(false);
+    }
   }
 
-  private loadCurrentPlan(): void {
+  private async loadCurrentPlan(): Promise<void> {
     this.planLoading.set(true);
     this.planLoadError.set('');
-    this.planningApi.getCurrentPlan().subscribe({
-      next: (plan) => {
-        this.plan.set(plan);
-        this.planLoading.set(false);
-        if (this.viewReady && this.shop()) setTimeout(() => this.renderBaseMap(), 0);
-      },
-      error: (error) => {
-        this.planLoading.set(false);
-        if (error?.status === 404) {
-          this.plan.set(null);
-          return;
-        }
-        console.error('load current plan failed', error);
-        this.planLoadError.set('โหลดแผนจัดส่งปัจจุบันไม่สำเร็จ');
+
+    try {
+      const plan = await lastValueFrom(this.planningApi.getCurrentPlan());
+      this.plan.set(plan);
+      if (this.viewReady && this.shop()) setTimeout(() => this.renderBaseMap(), 0);
+    } catch (error: any) {
+      if (error?.status === 404) {
+        this.plan.set(null);
+        return;
       }
-    });
+
+      console.error('Failed to load current plan:', error);
+      this.planLoadError.set('โหลดแผนจัดส่งปัจจุบันไม่สำเร็จ');
+    } finally {
+      this.planLoading.set(false);
+    }
   }
 
-  onCalculate(): void {
+  async onCalculate(): Promise<void> {
     this.calculateError.set('');
     this.calculating.set(true);
 
-    this.planningApi.calculatePlan().subscribe({
-      next: (result) => {
-        this.plan.set(result);
-        this.planLoadError.set('');
-        this.calculating.set(false);
-        if (this.viewReady) setTimeout(() => this.renderBaseMap(), 0);
-      },
-      error: (error) => {
-        console.error('calculate plan failed', error);
-        this.calculateError.set(
-          error?.error?.error || 'คำนวณเส้นทางไม่สำเร็จ กรุณาลองอีกครั้ง'
-        );
-        this.calculating.set(false);
-      }
-    });
+    try {
+      const result = await lastValueFrom(this.planningApi.calculatePlan());
+      this.plan.set(result);
+      this.planLoadError.set('');
+      if (this.viewReady) setTimeout(() => this.renderBaseMap(), 0);
+    } catch (error: any) {
+      console.error('Failed to calculate plan:', error);
+      this.calculateError.set(
+        error?.error?.error || 'คำนวณเส้นทางไม่สำเร็จ กรุณาลองอีกครั้ง'
+      );
+    } finally {
+      this.calculating.set(false);
+    }
   }
 
   private renderBaseMap(): void {
